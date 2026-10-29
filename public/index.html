@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeta | Gestão Estratégica de Projetos - IPMA ICB4</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Header Principal -->
+    <header class="app-header">
+        <div class="brand">
+            <div class="brand-logo" style="background: linear-gradient(135deg, #0284c7, #2563eb); font-weight:800;">PR</div>
+            <div class="brand-text">
+                <h1>PROJETA</h1>
+                <span id="headerSubBrand">Gestão Estratégica de Projetos | Framework IPMA ICB4</span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <!-- Seletor de Projeto Ativo -->
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:12px; color:#94a3b8;">Projeto:</span>
+                <select id="projectSelector" class="form-control" style="background:#1e293b; color:#fff; border-color:#334155; font-size:12.5px; padding:6px 12px; min-width:240px;">
+                    <!-- Preenchido via JS -->
+                </select>
+                <button id="btnNewProject" class="btn btn-primary" style="padding:6px 10px; font-size:12px;" title="Iniciar novo projeto com Wizard guiado de UX">➕ Novo Projeto</button>
+                <button id="btnDeleteProject" class="btn btn-outline" style="padding:6px 10px; font-size:12px; color:#f87171; border-color:#7f1d1d;" title="Excluir o projeto atualmente selecionado">🗑️</button>
+            </div>
+
+            <!-- Badges de Contexto -->
+            <span id="cloudBadge" class="badge" style="background:#059669; color:#fff; font-size:11px;" title="Conectado à Nuvem Supabase">☁️ Supabase Nuvem</span>
+            <span id="companyBadge" class="badge" style="background:#0369a1; color:#fff; font-size:11px;" title="Organização Executora">Empresa</span>
+            <span id="projectBadge" class="badge badge-info" style="font-size:11px;">CORPORATIVO</span>
+            <span id="statusBadge" class="badge badge-success" style="font-size:11px;">Iniciação</span>
+
+            <!-- Botões Globais de Ação -->
+            <button id="btnSave" class="btn btn-success" title="Salvar todas as alterações feitas">💾 Salvar</button>
+            <button id="btnExportExcel" class="btn btn-primary" title="Exportar para Excel exatamente no padrão do template oficial">📥 Exportar Excel</button>
+            <button id="btnExportPdfAll" class="btn btn-outline" title="Gerar Dossiê do Projeto completo em PDF">📄 Dossiê PDF</button>
+            <button id="btnReset" class="btn btn-outline" style="color:#f87171; border-color:#7f1d1d;" title="Restaurar dados originais do projeto modelo">🔄 Resetar</button>
+        </div>
+    </header>
+
+    <!-- Barra da Jornada do GP (Ciclo de Vida) -->
+    <div class="lifecycle-bar" id="lifecycleBar">
+        <div class="lifecycle-step" data-phase="initiation" onclick="navigatePhase('initiation')" title="Fase 1: Autorização formal e partes interessadas">
+            <span class="step-num">1</span>
+            <div class="step-info">
+                <strong>1. Iniciação</strong>
+                <small>TAP & Stakeholders</small>
+            </div>
+        </div>
+        <div class="lifecycle-arrow">➔</div>
+        <div class="lifecycle-step" data-phase="planning" onclick="navigatePhase('planning')" title="Fase 2: Linha de base integrada">
+            <span class="step-num">2</span>
+            <div class="step-info">
+                <strong>2. Planejamento</strong>
+                <small>Escopo, EAP, Cronograma & Riscos</small>
+            </div>
+        </div>
+        <div class="lifecycle-arrow">➔</div>
+        <div class="lifecycle-step active" data-phase="execution" onclick="navigatePhase('execution')" title="Fase 3: Acompanhamento contínuo e lições aprendidas ativas">
+            <span class="step-num">3</span>
+            <div class="step-info">
+                <strong>3. Execução & Monitoramento</strong>
+                <small>⚡ Lições Aprendidas (Contínuo)</small>
+            </div>
+        </div>
+        <div class="lifecycle-arrow">➔</div>
+        <div class="lifecycle-step" data-phase="closing" onclick="navigatePhase('closing')" title="Fase 4: Aceite formal, entregas e fechamento">
+            <span class="step-num">4</span>
+            <div class="step-info">
+                <strong>4. Encerramento</strong>
+                <small>Termo de Encerramento & Aceite</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Principal -->
+    <div class="app-container">
+
+        <!-- Sidebar de Navegação da Jornada do GP -->
+        <nav class="app-sidebar">
+            <div class="sidebar-section-title">Estratégia & Ciclo de Vida</div>
+            <div class="nav-item active" data-tab="journey">
+                <span class="nav-icon">🗺️</span> Jornada do GP (Lifecycle)
+            </div>
+            <div class="nav-item" data-tab="dashboard">
+                <span class="nav-icon">👁️</span> Olho da Competência IPMA
+            </div>
+            <div class="nav-item" data-tab="instructions" data-phase="initiation">
+                <span class="nav-icon">📜</span> Diretrizes & Governança
+                <span class="nav-status-dot dot-concluido" id="dot-instructions" title="Status do documento"></span>
+            </div>
+
+            <!-- Fase 1: Iniciação -->
+            <div class="sidebar-section-title phase-initiation-title">1. Fase de Iniciação</div>
+            <div class="nav-item" data-tab="tap" data-phase="initiation">
+                <span class="nav-icon">📝</span> 1. Termo de Abertura (TAP)
+                <span class="nav-status-dot dot-concluido" id="dot-tap" title="Status do documento"></span>
+            </div>
+            <div class="nav-item" data-tab="stakeholders" data-phase="initiation">
+                <span class="nav-icon">🤝</span> 2. Partes Interessadas
+                <span class="nav-status-dot dot-concluido" id="dot-stakeholders" title="Status do documento"></span>
+            </div>
+
+            <!-- Fase 2: Planejamento -->
+            <div class="sidebar-section-title phase-planning-title">2. Fase de Planejamento</div>
+            <div class="nav-item" data-tab="scope" data-phase="planning">
+                <span class="nav-icon">🎯</span> 3. Declaração de Escopo
+                <span class="nav-status-dot dot-concluido" id="dot-scope" title="Status do documento"></span>
+            </div>
+            <div class="nav-item" data-tab="wbs" data-phase="planning">
+                <span class="nav-icon">🌳</span> 4. EAP & WBS
+                <span class="nav-status-dot dot-concluido" id="dot-wbs" title="Status do documento"></span>
+            </div>
+            <div class="nav-item" data-tab="schedule" data-phase="planning">
+                <span class="nav-icon">⏱️</span> 5. Cronograma & Marcos
+                <span class="nav-status-dot dot-concluido" id="dot-schedule" title="Status do documento"></span>
+            </div>
+            <div class="nav-item" data-tab="raci" data-phase="planning">
+                <span class="nav-icon">📊</span> 6. Matriz RACI
+                <span class="nav-status-dot dot-concluido" id="dot-raci" title="Status do documento"></span>
+            </div>
+            <div class="nav-item" data-tab="budget" data-phase="planning">
+                <span class="nav-icon">💰</span> 7. Orçamento Linha de Base
+                <span class="nav-status-dot dot-concluido" id="dot-budget" title="Status do documento"></span>
+            </div>
+            <div class="nav-item" data-tab="risks" data-phase="planning">
+                <span class="nav-icon">⚠️</span> 8. Plano de Riscos
+                <span class="nav-status-dot dot-concluido" id="dot-risks" title="Status do documento"></span>
+            </div>
+            <div class="nav-item" data-tab="communication" data-phase="planning">
+                <span class="nav-icon">📢</span> 9. Plano de Comunicação
+                <span class="nav-status-dot dot-concluido" id="dot-communication" title="Status do documento"></span>
+            </div>
+            <div class="nav-item" data-tab="quality" data-phase="planning">
+                <span class="nav-icon">✅</span> 10. Plano de Qualidade
+                <span class="nav-status-dot dot-concluido" id="dot-quality" title="Status do documento"></span>
+            </div>
+            <div class="nav-item" data-tab="resources" data-phase="planning">
+                <span class="nav-icon">👥</span> 11. Recursos & Equipe
+                <span class="nav-status-dot dot-concluido" id="dot-resources" title="Status do documento"></span>
+            </div>
+
+            <!-- Fase 3: Execução & Monitoramento -->
+            <div class="sidebar-section-title phase-execution-title">3. Execução & Monitoramento</div>
+            <div class="nav-item highlight-nav-item" data-tab="lessons" data-phase="execution">
+                <span class="nav-icon">💡</span> 12. Lições Aprendidas <span class="badge-mini badge-live">Contínuo</span>
+                <span class="nav-status-dot dot-em-acompanhamento" id="dot-lessons" title="Documento vivo alimentado durante todo o ciclo"></span>
+            </div>
+            <div class="nav-item" data-tab="budget_revised" data-phase="execution">
+                <span class="nav-icon">📈</span> 13. Orçamento Revisado
+                <span class="nav-status-dot dot-em-acompanhamento" id="dot-budget_revised" title="Status do documento"></span>
+            </div>
+            <div class="nav-item" data-tab="changes" data-phase="execution">
+                <span class="nav-icon">🔀</span> 14. Solicitação de Mudanças
+                <span class="nav-status-dot dot-em-elaboracao" id="dot-changes" title="Status do documento"></span>
+            </div>
+
+            <!-- Fase 4: Encerramento -->
+            <div class="sidebar-section-title phase-closing-title">4. Fase de Encerramento</div>
+            <div class="nav-item" data-tab="closing" data-phase="closing">
+                <span class="nav-icon">🏁</span> 15. Termo de Encerramento
+                <span class="nav-status-dot dot-em-elaboracao" id="dot-closing" title="Preenchido ao término do projeto"></span>
+            </div>
+            <div class="nav-item" data-tab="versions" data-phase="closing">
+                <span class="nav-icon">🕒</span> 16. Controle de Versões
+                <span class="nav-status-dot dot-concluido" id="dot-versions" title="Status do documento"></span>
+            </div>
+        </nav>
+
+        <!-- Área de Conteúdo Dinâmico -->
+        <main class="app-content" id="mainContentArea">
+            <!-- O conteúdo da aba ativa será injetado pelo app.js -->
+        </main>
+
+    </div>
+
+    <!-- Modal Novo Projeto com Wizard Onboarding Guiado de UX -->
+    <div id="newProjectModal" class="modal-backdrop" style="display:none;">
+        <div class="modal-dialog" style="max-width: 660px;">
+            <div class="modal-header">
+                <div>
+                    <h3 style="margin:0;">Novo Projeto - Iniciação Guiada (UX Onboarding)</h3>
+                    <div style="font-size:12px; color:#94a3b8; margin-top:2px;">Framework IPMA-D (ICB4) - Estruturação do Ciclo de Vida</div>
+                </div>
+                <button class="modal-close" onclick="closeNewProjectModal()">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Stepper Visual de 3 Passos -->
+                <div class="wizard-stepper">
+                    <div class="wizard-step-node active" id="stepNode1" onclick="wizardGoToStep(1)">
+                        <div class="wizard-step-circle">1</div>
+                        <div class="wizard-step-title">Organização</div>
+                    </div>
+                    <div class="wizard-step-node" id="stepNode2" onclick="wizardGoToStep(2)">
+                        <div class="wizard-step-circle">2</div>
+                        <div class="wizard-step-title">Projeto</div>
+                    </div>
+                    <div class="wizard-step-node" id="stepNode3" onclick="wizardGoToStep(3)">
+                        <div class="wizard-step-circle">3</div>
+                        <div class="wizard-step-title">Prazos & Equipe</div>
+                    </div>
+                </div>
+
+                <!-- Formulário Wizard -->
+                <form id="newProjectForm" onsubmit="handleCreateProject(event)">
+                    
+                    <!-- PASSO 1: ORGANIZAÇÃO EXECUTORA -->
+                    <div class="wizard-panel active" id="wizardPanel1">
+                        <div style="margin-bottom:16px;">
+                            <h4 style="margin:0 0 4px 0; color:#0f172a; font-size:15px;">Passo 1 de 3: Identificação da Organização Executora</h4>
+                            <p style="margin:0; font-size:12.5px; color:#64748b;">
+                                Informe a empresa ou entidade responsável pela governança e execução do projeto.
+                            </p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight:700;">Nome da Empresa / Organização Executora: <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="wizCompany" class="form-control" placeholder="ex: Construtora Horizonte S.A. / Tech Solutions" required autofocus onkeydown="if(event.key==='Enter'){event.preventDefault();wizardNextStep(1);}">
+                            <small style="color:#64748b; font-size:11px;">Este nome será utilizado dinamicamente em todos os documentos, relatórios e exportações.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Cliente / Entidade Contratante Principal:</label>
+                            <input type="text" id="wizClient" class="form-control" placeholder="ex: Diretoria de Infraestrutura / Cliente Corporativo" onkeydown="if(event.key==='Enter'){event.preventDefault();wizardNextStep(1);}">
+                        </div>
+
+                        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:6px; padding:12px; margin-top:16px; font-size:12px; color:#0369a1;">
+                            <strong>💡 Diretriz IPMA-D:</strong> A organização executora estabelece o ambiente de governança corporativa, critérios de conformidade e a cultura de entrega do projeto.
+                        </div>
+
+                        <div class="modal-footer" style="padding-left:0; padding-right:0; padding-bottom:0; margin-top:20px;">
+                            <button type="button" class="btn btn-outline" onclick="closeNewProjectModal()">Cancelar</button>
+                            <button type="button" class="btn btn-primary" onclick="wizardNextStep(1)">Avançar: Nome do Projeto ➔</button>
+                        </div>
+                    </div>
+
+                    <!-- PASSO 2: IDENTIFICAÇÃO DO PROJETO -->
+                    <div class="wizard-panel" id="wizardPanel2">
+                        <div style="margin-bottom:16px;">
+                            <h4 style="margin:0 0 4px 0; color:#0f172a; font-size:15px;">Passo 2 de 3: Identificação do Projeto</h4>
+                            <p style="margin:0; font-size:12.5px; color:#64748b;">
+                                Defina o nome oficial e o código de referência do projeto no portfólio corporativo.
+                            </p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight:700;">Nome Completo do Projeto: <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="wizName" class="form-control" placeholder="ex: Modernização da Infraestrutura de TI 4.0" required onkeydown="if(event.key==='Enter'){event.preventDefault();wizardNextStep(2);}">
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight:700;">Código / Sigla do Projeto: <span style="color:#ef4444;">*</span></label>
+                                <input type="text" id="wizCode" class="form-control" placeholder="ex: MIT-2026" required onkeydown="if(event.key==='Enter'){event.preventDefault();wizardNextStep(2);}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Classificação de Informação:</label>
+                                <select id="wizClassification" class="form-control">
+                                    <option value="CORPORATIVO" selected>CORPORATIVO</option>
+                                    <option value="ESTRATÉGICO">ESTRATÉGICO</option>
+                                    <option value="CONFIDENCIAL">CONFIDENCIAL</option>
+                                    <option value="RESERVADO">RESERVADO</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer" style="padding-left:0; padding-right:0; padding-bottom:0; margin-top:20px;">
+                            <button type="button" class="btn btn-outline" onclick="wizardGoToStep(1)">⬅️ Voltar</button>
+                            <button type="button" class="btn btn-primary" onclick="wizardNextStep(2)">Avançar: Prazos & Governança ➔</button>
+                        </div>
+                    </div>
+
+                    <!-- PASSO 3: PRAZOS, LIDERANÇA & MODELO -->
+                    <div class="wizard-panel" id="wizardPanel3">
+                        <div style="margin-bottom:16px;">
+                            <h4 style="margin:0 0 4px 0; color:#0f172a; font-size:15px;">Passo 3 de 3: Prazo Previsto, Liderança & Estrutura Inicial</h4>
+                            <p style="margin:0; font-size:12.5px; color:#64748b;">
+                                Estabeleça o prazo de conclusão, os responsáveis pelo projeto e a estrutura documental inicial.
+                            </p>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight:700;">Data de Início Prevista:</label>
+                                <input type="date" id="wizStartDate" class="form-control" value="2026-11-01" onchange="calculateWizardDuration()">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight:700;">Prazo Previsto de Conclusão (Término):</label>
+                                <input type="date" id="wizEndDate" class="form-control" value="2027-11-01" onchange="calculateWizardDuration()">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Prazo Total / Duração Estimada:</label>
+                            <input type="text" id="wizDuration" class="form-control" value="12 meses (365 dias)" placeholder="ex: 12 meses (365 dias)">
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label">Gerente do Projeto (GP):</label>
+                                <input type="text" id="wizManager" class="form-control" placeholder="ex: Eng. Roberto Silva">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Patrocinador (Sponsor):</label>
+                                <input type="text" id="wizSponsor" class="form-control" placeholder="ex: Diretora Mariana Costa">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Teto Orçamentário Autorizado:</label>
+                            <input type="text" id="wizBudget" class="form-control" placeholder="ex: R$ 5.000.000,00" value="R$ 1.000.000,00">
+                        </div>
+
+                        <div class="form-group" style="background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #cbd5e1; margin-top:12px;">
+                            <label class="form-label" style="margin-bottom:8px; font-weight:700;">Estrutura Inicial do Projeto:</label>
+                            <label style="display:flex; align-items:flex-start; gap:8px; font-size:12.5px; cursor:pointer; margin-bottom:8px;">
+                                <input type="radio" name="wizTemplateMode" value="clone" checked style="margin-top:3px;">
+                                <span><strong>Referencial Completo IPMA-D (Recomendado):</strong> Inicia pré-populado com os 16 documentos do ciclo de vida organizados pela Jornada do GP e adaptados para a sua empresa.</span>
+                            </label>
+                            <label style="display:flex; align-items:flex-start; gap:8px; font-size:12.5px; cursor:pointer;">
+                                <input type="radio" name="wizTemplateMode" value="blank" style="margin-top:3px;">
+                                <span><strong>Projeto em Branco:</strong> Inicia com estrutura limpa de governança para preenchimento gradual ao longo das fases.</span>
+                            </label>
+                        </div>
+
+                        <div class="modal-footer" style="padding-left:0; padding-right:0; padding-bottom:0; margin-top:20px;">
+                            <button type="button" class="btn btn-outline" onclick="wizardGoToStep(2)">⬅️ Voltar</button>
+                            <button type="submit" class="btn btn-success">🚀 Concluir Criação & Iniciar Jornada</button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Principal -->
+    <!-- Scripts do Projeta (Nuvem Supabase + Motor IPMA-D + PDF + Excel) -->
+    <script src="./exceljs.min.js"></script>
+    <script src="./js/supabaseSync.js"></script>
+    <script src="./js/ipmaCoverage.js"></script>
+    <script src="./js/pdfRenderer.js"></script>
+    <script src="./js/excelExporter.js"></script>
+    <script src="./js/projeta.js"></script>
+</body>
+</html>

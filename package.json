@@ -1,0 +1,11 @@
+{
+  "name": "projeta",
+  "version": "1.0.0",
+  "description": "PROJETA - Sistema de Gestão Estratégica de Projetos IPMA-D na Nuvem com Vercel e Supabase",
+  "scripts": {
+    "start": "npx serve public"
+  },
+  "keywords": ["ipma", "icb4", "project-management", "supabase", "vercel"],
+  "author": "Everton / Projeta",
+  "license": "MIT"
+}
