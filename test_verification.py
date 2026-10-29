@@ -19,6 +19,7 @@ def run_tests():
         ("/index.html", 200, "text/html"),
         ("/css/style.css", 200, "text/css"),
         ("/exceljs.min.js", 200, "application/javascript"),
+        ("/js/auth.js", 200, "application/javascript"),
         ("/js/supabaseSync.js", 200, "application/javascript"),
         ("/js/ipmaCoverage.js", 200, "application/javascript"),
         ("/js/pdfRenderer.js", 200, "application/javascript"),
