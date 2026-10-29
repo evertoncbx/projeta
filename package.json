@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npx serve .",
     "dev": "npx serve .",
-    "build": "echo 'PROJETA: Deploy estatico pronto para Vercel'"
+    "test": "python test_verification.py"
   },
   "keywords": [
     "ipma",

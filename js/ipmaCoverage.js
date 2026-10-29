@@ -420,3 +420,11 @@ function getCompetenceCoverage(project) {
         domains: domainResults
     };
 }
+
+if (typeof window !== 'undefined') {
+    window.IPMA_COMPETENCES = IPMA_COMPETENCES;
+    window.getCompetenceCoverage = getCompetenceCoverage;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { IPMA_COMPETENCES, getCompetenceCoverage };
+}

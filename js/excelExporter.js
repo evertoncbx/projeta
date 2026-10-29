@@ -22,7 +22,8 @@ async function exportProjectToExcel(project) {
         }
 
         if (!resp || !resp.ok) {
-            resp = await fetch('https://fvsrnuovfzcugkwdwixs.supabase.co/storage/v1/object/public/bridge-files/Template%20%20_%20Plano%20de%20Projeto%20-2026_Lendlease%20-%20Empresa%20Vertex%20Engenharia%20Brasil.xlsx');
+            // Fallback remoto via repositório GitHub do próprio Projeta (desacoplado do uTrace)
+            resp = await fetch('https://raw.githubusercontent.com/evertoncbx/projeta/main/template.xlsx');
         }
         if (!resp || !resp.ok) throw new Error('Não foi possível carregar o template base do Excel.');
 
@@ -296,4 +297,11 @@ async function exportProjectToExcel(project) {
         console.error('Erro ao exportar Excel:', err);
         showToast('Erro ao exportar Excel: ' + err.message, 'danger');
     }
+}
+
+if (typeof window !== 'undefined') {
+    window.exportProjectToExcel = exportProjectToExcel;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { exportProjectToExcel };
 }

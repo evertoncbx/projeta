@@ -1,8 +1,9 @@
 -- ============================================================================
--- PROJETA - Script SQL para Banco de Dados na Nuvem (Supabase PostgreSQL)
+-- PROJETA - Script SQL Oficial para Banco de Dados na Nuvem (Supabase)
+-- Instância Dedicada: projeta
 -- ============================================================================
 
--- 1. Tabela Principal de Projetos
+-- 1. TABELA PRINCIPAL DE PROJETOS (PostgreSQL Relacional)
 CREATE TABLE IF NOT EXISTS public.projects (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -20,22 +21,42 @@ CREATE TABLE IF NOT EXISTS public.projects (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. Índices de Alta Performance
+-- 2. ÍNDICES DE ALTA PERFORMANCE
 CREATE INDEX IF NOT EXISTS idx_projects_company ON public.projects(company);
 CREATE INDEX IF NOT EXISTS idx_projects_code ON public.projects(code);
 CREATE INDEX IF NOT EXISTS idx_projects_status ON public.projects(status);
 
--- 3. Habilita RLS (Row Level Security) e Permissões de Leitura/Escrita Pública
+-- 3. POLÍTICAS DE SEGURANÇA E ACESSO RLS (PostgreSQL)
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Acesso público de leitura no Projeta" 
-ON public.projects FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Acesso público projeta" ON public.projects;
+CREATE POLICY "Acesso público projeta" 
+ON public.projects FOR ALL 
+USING (true) 
+WITH CHECK (true);
 
-CREATE POLICY "Acesso público de inserção no Projeta" 
-ON public.projects FOR INSERT WITH CHECK (true);
+-- 4. BUCKET DEDICADO DE STORAGE NO SUPABASE ('projeta')
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('projeta', 'projeta', true)
+ON CONFLICT (id) DO NOTHING;
 
-CREATE POLICY "Acesso público de atualização no Projeta" 
-ON public.projects FOR UPDATE USING (true);
+-- 5. POLÍTICAS DE ACESSO PÚBLICO AO STORAGE DO PROJETA
+DROP POLICY IF EXISTS "Acesso público leitura storage projeta" ON storage.objects;
+CREATE POLICY "Acesso público leitura storage projeta" 
+ON storage.objects FOR SELECT 
+USING (bucket_id = 'projeta');
 
-CREATE POLICY "Acesso público de exclusão no Projeta" 
-ON public.projects FOR DELETE USING (true);
+DROP POLICY IF EXISTS "Acesso público escrita storage projeta" ON storage.objects;
+CREATE POLICY "Acesso público escrita storage projeta" 
+ON storage.objects FOR INSERT 
+WITH CHECK (bucket_id = 'projeta');
+
+DROP POLICY IF EXISTS "Acesso público atualização storage projeta" ON storage.objects;
+CREATE POLICY "Acesso público atualização storage projeta" 
+ON storage.objects FOR UPDATE 
+USING (bucket_id = 'projeta');
+
+DROP POLICY IF EXISTS "Acesso público exclusão storage projeta" ON storage.objects;
+CREATE POLICY "Acesso público exclusão storage projeta" 
+ON storage.objects FOR DELETE 
+USING (bucket_id = 'projeta');

@@ -1,16 +1,29 @@
 /**
  * Projeta - Módulo Avançado de Sincronização em Nuvem (Supabase Database + Storage + Cache Local)
- * Garante persistência multi-dispositivo segura, sincronização bidirecional e tolerância total a falhas.
+ * Garante persistência multi-dispositivo segura, sincronização bidirecional e isolamento dedicado para o projeto Projeta.
  */
 
 const DEFAULT_SUPABASE_CONFIG = {
-    url: 'https://fvsrnuovfzcugkwdwixs.supabase.co',
-    anonKey: 'sb_publishable_y61ZayzWcRQSTHLQ0sqaZg_Z5NdiHpk',
-    bucket: 'bridge-files',
+    url: '', // URL do projeto dedicado 'projeta' no Supabase (ex: https://[ref].supabase.co)
+    anonKey: '', // Chave pública anônima (anon public key) do projeto 'projeta'
+    bucket: 'projeta',
     fileName: 'projeta_projects.json',
     tableName: 'projects',
     preferredEngine: 'hybrid' // 'table', 'storage', or 'hybrid'
 };
+
+function formatIsoDate(d) {
+    if (!d) return null;
+    const str = String(d).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    const m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (m) {
+        const day = m[1].padStart(2, '0');
+        const month = m[2].padStart(2, '0');
+        return `${m[3]}-${month}-${day}`;
+    }
+    return null;
+}
 
 const ProjetaCloud = {
     // Obtém configuração ativa (personalizada pelo usuário ou padrão)
@@ -19,6 +32,11 @@ const ProjetaCloud = {
             const saved = localStorage.getItem('projeta_supabase_config');
             if (saved) {
                 const parsed = JSON.parse(saved);
+                // Previne reuso involuntário de URLs do uTrace
+                if (parsed.url && parsed.url.includes('fvsrnuovfzcugkwdwixs')) {
+                    localStorage.removeItem('projeta_supabase_config');
+                    return { ...DEFAULT_SUPABASE_CONFIG };
+                }
                 return { ...DEFAULT_SUPABASE_CONFIG, ...parsed };
             }
         } catch (e) {
@@ -38,12 +56,18 @@ const ProjetaCloud = {
         }
     },
 
-    // Restaura configurações para o padrão
+    // Restaura configurações para o padrão limpo
     resetConfig() {
         localStorage.removeItem('projeta_supabase_config');
     },
 
-    // Testa a conectividade com o Supabase fornecido
+    // Verifica se há credenciais válidas configuradas
+    isConfigured(cfg = null) {
+        const c = cfg || this.getConfig();
+        return Boolean(c.url && c.anonKey && c.url.startsWith('http') && !c.url.includes('fvsrnuovfzcugkwdwixs'));
+    },
+
+    // Testa a conectividade com a instância dedicada do Supabase
     async testConnection(config = null) {
         const cfg = config || this.getConfig();
         const results = {
@@ -52,6 +76,11 @@ const ProjetaCloud = {
             message: '',
             latencyMs: 0
         };
+
+        if (!cfg.url || !cfg.anonKey || !cfg.url.startsWith('http')) {
+            results.message = 'Por favor, informe a URL do Supabase (https://...) e a Chave Pública Anon.';
+            return results;
+        }
 
         const startTime = Date.now();
         const headers = {
@@ -71,11 +100,12 @@ const ProjetaCloud = {
             results.rest = false;
         }
 
-        // 2. Testa Storage
+        // 2. Testa Storage (Listagem no bucket dedicado 'projeta')
         try {
-            const storageResp = await fetch(`${cfg.url}/storage/v1/bucket`, {
-                method: 'GET',
-                headers
+            const storageResp = await fetch(`${cfg.url}/storage/v1/object/list/${cfg.bucket}`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ prefix: '', limit: 1 })
             });
             results.storage = storageResp.ok;
         } catch (e) {
@@ -85,13 +115,13 @@ const ProjetaCloud = {
         results.latencyMs = Date.now() - startTime;
 
         if (results.rest && results.storage) {
-            results.message = `Conexão completa estabelecida com sucesso! (Latência: ${results.latencyMs}ms - Banco e Storage ativos)`;
+            results.message = `Conexão completa estabelecida com sucesso! (Latência: ${results.latencyMs}ms - Tabela '${cfg.tableName}' e Bucket '${cfg.bucket}' ativos)`;
         } else if (results.rest) {
-            results.message = `Conexão com Banco de Dados OK! (Latência: ${results.latencyMs}ms)`;
+            results.message = `Conexão com Banco de Dados OK! Tabela '${cfg.tableName}' acessível. (Latência: ${results.latencyMs}ms)`;
         } else if (results.storage) {
-            results.message = `Conexão com Storage OK! (Latência: ${results.latencyMs}ms)`;
+            results.message = `Conexão com Storage OK! Bucket '${cfg.bucket}' acessível. (Latência: ${results.latencyMs}ms)`;
         } else {
-            results.message = 'Não foi possível conectar. Verifique a URL do Supabase e a Chave Pública (Anon Key).';
+            results.message = 'Não foi possível conectar. Verifique se o projeto Projeta foi criado no Supabase e se o script SQL foi executado.';
         }
 
         return results;
@@ -100,56 +130,60 @@ const ProjetaCloud = {
     // Carrega todos os projetos da Nuvem com estratégia em cascata (Table -> Storage -> Cache)
     async loadProjects() {
         const cfg = this.getConfig();
-        const headers = {
-            'apikey': cfg.anonKey,
-            'Authorization': `Bearer ${cfg.anonKey}`,
-            'Content-Type': 'application/json'
-        };
 
-        // 1. Tenta carregar do Banco de Dados Relacional (PostgREST)
-        try {
-            const tableUrl = `${cfg.url}/rest/v1/${cfg.tableName}?select=*&order=updated_at.desc`;
-            const resp = await fetch(tableUrl, { method: 'GET', headers, cache: 'no-cache' });
-            if (resp.ok) {
-                const rows = await resp.json();
-                if (Array.isArray(rows) && rows.length > 0) {
-                    const projects = rows.map(r => (r.data ? r.data : r));
-                    localStorage.setItem('projeta_projects_cache', JSON.stringify(projects));
-                    this.updateCloudStatus(true, 'Banco de Dados (PostgreSQL)');
-                    return projects;
-                }
-            }
-        } catch (err) {
-            console.warn('[ProjetaCloud] Falha ao ler tabela do Supabase:', err);
-        }
+        if (this.isConfigured(cfg)) {
+            const headers = {
+                'apikey': cfg.anonKey,
+                'Authorization': `Bearer ${cfg.anonKey}`,
+                'Content-Type': 'application/json'
+            };
 
-        // 2. Tenta carregar do Supabase Storage
-        try {
-            const storageUrl = `${cfg.url}/storage/v1/object/public/${cfg.bucket}/${cfg.fileName}?_t=${Date.now()}`;
-            const resp = await fetch(storageUrl, { cache: 'no-cache' });
-            if (resp.ok) {
-                const projects = await resp.json();
-                if (Array.isArray(projects) && projects.length > 0) {
-                    localStorage.setItem('projeta_projects_cache', JSON.stringify(projects));
-                    this.updateCloudStatus(true, 'Supabase Storage');
-                    return projects;
+            // 1. Tenta carregar do Banco de Dados Relacional (PostgREST)
+            try {
+                const tableUrl = `${cfg.url}/rest/v1/${cfg.tableName}?select=*&order=updated_at.desc`;
+                const resp = await fetch(tableUrl, { method: 'GET', headers, cache: 'no-cache' });
+                if (resp.ok) {
+                    const rows = await resp.json();
+                    if (Array.isArray(rows) && rows.length > 0) {
+                        const projects = rows.map(r => (r.data ? r.data : r));
+                        localStorage.setItem('projeta_projects_cache', JSON.stringify(projects));
+                        this.updateCloudStatus(true, 'Banco PostgreSQL');
+                        return projects;
+                    }
                 }
+            } catch (err) {
+                console.warn('[ProjetaCloud] Falha ao ler tabela do Supabase:', err);
             }
-        } catch (err) {
-            console.warn('[ProjetaCloud] Falha ao ler storage do Supabase:', err);
+
+            // 2. Tenta carregar do Supabase Storage
+            try {
+                const storageUrl = `${cfg.url}/storage/v1/object/public/${cfg.bucket}/${cfg.fileName}?_t=${Date.now()}`;
+                const resp = await fetch(storageUrl, { cache: 'no-cache' });
+                if (resp.ok) {
+                    const projects = await resp.json();
+                    if (Array.isArray(projects) && projects.length > 0) {
+                        localStorage.setItem('projeta_projects_cache', JSON.stringify(projects));
+                        this.updateCloudStatus(true, 'Storage Nuvem');
+                        return projects;
+                    }
+                }
+            } catch (err) {
+                console.warn('[ProjetaCloud] Falha ao ler storage do Supabase:', err);
+            }
         }
 
         // 3. Fallback seguro para cache local
         const cached = localStorage.getItem('projeta_projects_cache');
         if (cached) {
             try {
-                this.updateCloudStatus(false);
+                this.updateCloudStatus(this.isConfigured(cfg));
                 return JSON.parse(cached);
             } catch (e) {
                 console.error('[ProjetaCloud] Erro ao decodificar cache local:', e);
             }
         }
 
+        this.updateCloudStatus(false);
         return [];
     },
 
@@ -157,10 +191,15 @@ const ProjetaCloud = {
     async saveProjects(projectsList) {
         if (!Array.isArray(projectsList)) return false;
 
-        // Salva instantaneamente em cache local
+        // Salva instantaneamente em cache local para persistência garantida
         localStorage.setItem('projeta_projects_cache', JSON.stringify(projectsList));
 
         const cfg = this.getConfig();
+        if (!this.isConfigured(cfg)) {
+            this.updateCloudStatus(false);
+            return false;
+        }
+
         const headers = {
             'apikey': cfg.anonKey,
             'Authorization': `Bearer ${cfg.anonKey}`,
@@ -180,8 +219,8 @@ const ProjetaCloud = {
                 client: String(p.client || ''),
                 sponsor: String(p.sponsor || ''),
                 manager: String(p.manager || ''),
-                start_date: p.start_date || p.date || null,
-                end_date: p.end_date || null,
+                start_date: formatIsoDate(p.start_date || p.date),
+                end_date: formatIsoDate(p.end_date),
                 duration: String(p.duration || ''),
                 status: String(p.status || 'Iniciação'),
                 data: p,
@@ -226,7 +265,7 @@ const ProjetaCloud = {
         }
 
         const isOnline = dbSuccess || storageSuccess;
-        this.updateCloudStatus(isOnline, dbSuccess ? 'Banco + Storage' : 'Storage Nuvem');
+        this.updateCloudStatus(isOnline, dbSuccess && storageSuccess ? 'Banco + Storage' : (dbSuccess ? 'Banco PostgreSQL' : 'Storage Nuvem'));
         return isOnline;
     },
 
@@ -235,19 +274,23 @@ const ProjetaCloud = {
         const badge = document.getElementById('cloudBadge');
         if (!badge) return;
 
-        const isCustom = !!localStorage.getItem('projeta_supabase_config');
-        const customTag = isCustom ? ' [Ded.]' : '';
+        const isCustom = this.isConfigured();
 
-        if (isOnline) {
+        if (!isCustom) {
+            badge.style.background = '#475569';
+            badge.style.color = '#ffffff';
+            badge.innerHTML = '☁️ Conectar Supabase Projeta';
+            badge.title = 'Clique para vincular a instância dedicada do Supabase (projeta).';
+        } else if (isOnline) {
             badge.style.background = '#059669';
             badge.style.color = '#ffffff';
-            badge.innerHTML = `☁️ Supabase Nuvem${customTag} (${engine || 'Sincronizado'})`;
-            badge.title = 'Conectado à nuvem. Clique para ver/alterar parâmetros de conexão.';
+            badge.innerHTML = `☁️ Supabase Projeta (${engine || 'Sincronizado'})`;
+            badge.title = 'Conectado à nuvem dedicada do Projeta. Clique para gerenciar conexão.';
         } else {
             badge.style.background = '#d97706';
             badge.style.color = '#ffffff';
-            badge.innerHTML = '⚠️ Modo Cache Local';
-            badge.title = 'Sem conexão no momento. As alterações estão salvas no navegador e sincronizam ao restabelecer conexão. Clique para configurar.';
+            badge.innerHTML = '⚠️ Projeta Offline (Cache Local)';
+            badge.title = 'Sem conexão com a nuvem no momento. Dados salvos localmente no navegador.';
         }
     }
 };
@@ -268,12 +311,12 @@ window.openCloudConfigModal = function() {
                 <div class="modal-body" style="padding: 20px;">
                     <p style="font-size:13px; color:#64748b; margin-top:0;">
                         Configure os parâmetros de integração com a sua instância dedicada do <strong>Supabase (projeta)</strong>. 
-                        O Projeta suporta persistência híbrida (Tabela PostgreSQL e Storage JSON com cache local).
+                        O Projeta suporta persistência híbrida (Tabela PostgreSQL e Storage JSON com cache local resiliente).
                     </p>
 
                     <div class="form-group">
                         <label class="form-label">URL do Projeto Supabase (Project URL):</label>
-                        <input type="text" id="cfgSupabaseUrl" class="form-control" placeholder="https://seu-projeto.supabase.co" style="font-family:monospace;">
+                        <input type="text" id="cfgSupabaseUrl" class="form-control" placeholder="https://seu-projeto-projeta.supabase.co" style="font-family:monospace;">
                     </div>
 
                     <div class="form-group">
@@ -288,15 +331,15 @@ window.openCloudConfigModal = function() {
                         </div>
                         <div class="form-group">
                             <label class="form-label">Nome do Bucket de Storage:</label>
-                            <input type="text" id="cfgSupabaseBucket" class="form-control" value="bridge-files" placeholder="bridge-files ou projeta">
+                            <input type="text" id="cfgSupabaseBucket" class="form-control" value="projeta" placeholder="projeta">
                         </div>
                     </div>
 
                     <div id="cloudTestStatus" style="display:none; padding:10px 14px; border-radius:6px; font-size:12.5px; margin-bottom:14px;"></div>
 
                     <details style="margin-top:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:10px;">
-                        <summary style="font-size:12.5px; font-weight:600; cursor:pointer; color:#0369a1;">📜 Ver / Copiar Script SQL do Banco (Supabase SQL Editor)</summary>
-                        <pre style="margin-top:8px; font-size:11px; max-height:160px; overflow-y:auto; background:#1e293b; color:#e2e8f0; padding:10px; border-radius:4px; white-space:pre-wrap;" id="sqlSchemaPre">
+                        <summary style="font-size:12.5px; font-weight:600; cursor:pointer; color:#0369a1;">📜 Ver / Copiar Script SQL Completo do Banco (Supabase SQL Editor)</summary>
+                        <pre style="margin-top:8px; font-size:11px; max-height:160px; overflow-y:auto; background:#1e293b; color:#e2e8f0; padding:10px; border-radius:4px; white-space:pre-wrap;" id="sqlSchemaPre">-- 1. Cria Tabela de Projetos
 CREATE TABLE IF NOT EXISTS public.projects (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -314,10 +357,30 @@ CREATE TABLE IF NOT EXISTS public.projects (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_projects_company ON public.projects(company);
+CREATE INDEX IF NOT EXISTS idx_projects_code ON public.projects(code);
+CREATE INDEX IF NOT EXISTS idx_projects_status ON public.projects(status);
+
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Acesso público projeta" ON public.projects FOR ALL USING (true);
-                        </pre>
-                        <button type="button" class="btn btn-outline" style="font-size:11.5px; padding:4px 8px; color:#0f172a; border-color:#cbd5e1;" onclick="copyProjetaSql()">📋 Copiar SQL</button>
+CREATE POLICY "Acesso público projeta" ON public.projects FOR ALL USING (true) WITH CHECK (true);
+
+-- 2. Cria Bucket de Storage 'projeta'
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('projeta', 'projeta', true)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Acesso público leitura storage projeta" 
+ON storage.objects FOR SELECT USING (bucket_id = 'projeta');
+
+CREATE POLICY "Acesso público escrita storage projeta" 
+ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'projeta');
+
+CREATE POLICY "Acesso público atualização storage projeta" 
+ON storage.objects FOR UPDATE USING (bucket_id = 'projeta');
+
+CREATE POLICY "Acesso público exclusão storage projeta" 
+ON storage.objects FOR DELETE USING (bucket_id = 'projeta');</pre>
+                        <button type="button" class="btn btn-outline" style="font-size:11.5px; padding:4px 8px; color:#0f172a; border-color:#cbd5e1;" onclick="copyProjetaSql()">📋 Copiar Script SQL</button>
                     </details>
                 </div>
                 <div class="modal-footer" style="padding:14px 20px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0;">
@@ -336,7 +399,7 @@ CREATE POLICY "Acesso público projeta" ON public.projects FOR ALL USING (true);
     document.getElementById('cfgSupabaseUrl').value = cfg.url || '';
     document.getElementById('cfgSupabaseKey').value = cfg.anonKey || '';
     document.getElementById('cfgSupabaseTable').value = cfg.tableName || 'projects';
-    document.getElementById('cfgSupabaseBucket').value = cfg.bucket || 'bridge-files';
+    document.getElementById('cfgSupabaseBucket').value = cfg.bucket || 'projeta';
     modal.style.display = 'flex';
 };
 
@@ -356,7 +419,7 @@ window.testCloudConnectionUI = async function() {
         url: document.getElementById('cfgSupabaseUrl').value.trim().replace(/\/+$/, ''),
         anonKey: document.getElementById('cfgSupabaseKey').value.trim(),
         tableName: document.getElementById('cfgSupabaseTable').value.trim() || 'projects',
-        bucket: document.getElementById('cfgSupabaseBucket').value.trim() || 'bridge-files'
+        bucket: document.getElementById('cfgSupabaseBucket').value.trim() || 'projeta'
     };
 
     const res = await ProjetaCloud.testConnection(testCfg);
@@ -376,7 +439,7 @@ window.saveCloudConfigUI = async function() {
         url: document.getElementById('cfgSupabaseUrl').value.trim().replace(/\/+$/, ''),
         anonKey: document.getElementById('cfgSupabaseKey').value.trim(),
         tableName: document.getElementById('cfgSupabaseTable').value.trim() || 'projects',
-        bucket: document.getElementById('cfgSupabaseBucket').value.trim() || 'bridge-files',
+        bucket: document.getElementById('cfgSupabaseBucket').value.trim() || 'projeta',
         fileName: 'projeta_projects.json'
     };
 

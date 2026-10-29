@@ -10,7 +10,7 @@ Sistema independente e profissional para gestão estratégica de projetos no fra
 - **Deploy Vercel Dedicado**: Projeto próprio e autônomo na Vercel (Edge Network global de alta performance com zero rewrites intrusivos)
 - **Persistência Híbrida Supabase**: 
   - Banco de Dados PostgreSQL Relacional (Tabela `projects`) via REST PostgREST API
-  - Backup em Supabase Storage (`bridge-files` / `projeta`)
+  - Backup em Supabase Storage dedicado (Bucket `projeta`)
   - Cache local resiliente offline via Web Storage API
 - **Exportação Excel Oficial**: Geração client-side de arquivos `.xlsx` oficiais com ExcelJS, preservando cabeçalhos corporativos, cores e fórmulas
 - **Relatórios Executivos em PDF**: Dossiê completo e relatórios modulares compatíveis com impressão e PDF padrão A4

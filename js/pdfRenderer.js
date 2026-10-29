@@ -560,3 +560,10 @@ function renderPdfHtml(project_data, module = "all") {
 
     return html;
 }
+
+if (typeof window !== 'undefined') {
+    window.renderPdfHtml = renderPdfHtml;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { renderPdfHtml };
+}
