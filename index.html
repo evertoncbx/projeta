@@ -331,14 +331,15 @@
                         <div class="form-group" style="background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #cbd5e1; margin-top:12px;">
                             <label class="form-label" style="margin-bottom:8px; font-weight:700;">Estrutura Inicial do Projeto:</label>
                             <label style="display:flex; align-items:flex-start; gap:8px; font-size:12.5px; cursor:pointer; margin-bottom:8px;">
-                                <input type="radio" name="wizTemplateMode" value="clone" checked style="margin-top:3px;">
-                                <span><strong>Referencial Completo IPMA-D (Recomendado):</strong> Inicia pré-populado com os 16 documentos do ciclo de vida organizados pela Jornada do GP e adaptados para a sua empresa.</span>
+                                <input type="radio" name="wizTemplateMode" value="blank" checked style="margin-top:3px;">
+                                <span><strong>Projeto 100% Limpo (Recomendado):</strong> Cria um projeto zerado para a sua empresa com as amarrações do IPMA ativas, tabelas prontas e sem nenhum dado do modelo Lendlease misturado.</span>
                             </label>
                             <label style="display:flex; align-items:flex-start; gap:8px; font-size:12.5px; cursor:pointer;">
-                                <input type="radio" name="wizTemplateMode" value="blank" style="margin-top:3px;">
-                                <span><strong>Projeto em Branco:</strong> Inicia com estrutura limpa de governança para preenchimento gradual ao longo das fases.</span>
+                                <input type="radio" name="wizTemplateMode" value="clone" style="margin-top:3px;">
+                                <span><strong>Clonar Exemplo de Demonstração:</strong> Clona o projeto modelo referencial Lendlease com dados de exemplo.</span>
                             </label>
                         </div>
+                        <datalist id="projectTeamDatalist"></datalist>
 
                         <div class="modal-footer" style="padding-left:0; padding-right:0; padding-bottom:0; margin-top:20px;">
                             <button type="button" class="btn btn-outline" onclick="wizardGoToStep(2)">⬅️ Voltar</button>

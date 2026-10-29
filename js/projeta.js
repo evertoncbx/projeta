@@ -33,7 +33,9 @@ async function loadProjectList(selectedId = null) {
             allProjects.forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p.id;
-                opt.textContent = `${p.code} - ${p.name} (${p.company || 'Organização'})`;
+                opt.textContent = p.id === 'proj-vertex-londrina-360'
+                    ? `${p.code} - ${p.name} (Modelo Lendlease Referencial)`
+                    : `${p.code} - ${p.name} (${p.company || 'Organização'})`;
                 select.appendChild(opt);
             });
 
@@ -145,6 +147,582 @@ async function resetProject() {
         showToast('Erro ao restaurar: ' + e.message, 'danger');
     }
 }
+
+
+// ==================== CROSS-DOCUMENT BINDING & CLEAN INITIALIZATION ====================
+
+function createCleanProjectData(params) {
+    const id = params.id || `proj-${Date.now()}`;
+    const company = params.company || "Empresa Executora";
+    const client = params.client || "Cliente Contratante";
+    const name = params.name || "Novo Projeto IPMA";
+    const code = params.code || "PRJ";
+    const classification = params.classification || "CORPORATIVO";
+    const startDate = params.startDate || new Date().toISOString().split('T')[0];
+    const endDate = params.endDate || "2027-11-01";
+    const duration = params.duration || "12 meses";
+    const manager = params.manager || "Gerente do Projeto";
+    const sponsor = params.sponsor || "Patrocinador";
+    const budget = params.budget || "R$ 1.000.000,00";
+
+    const newProj = {
+        id,
+        company,
+        client,
+        name,
+        code,
+        classification,
+        date: startDate,
+        start_date: startDate,
+        end_date: endDate,
+        duration,
+        manager,
+        sponsor,
+        budget_limit: budget,
+        status: "Iniciação",
+        evaluation: "Pendente",
+        doc_status: {
+            instructions: "em_elaboracao",
+            tap: "em_elaboracao",
+            stakeholders: "em_elaboracao",
+            scope: "nao_iniciado",
+            wbs: "nao_iniciado",
+            schedule: "nao_iniciado",
+            raci: "nao_iniciado",
+            budget: "nao_iniciado",
+            risks: "nao_iniciado",
+            communication: "nao_iniciado",
+            quality: "nao_iniciado",
+            resources: "nao_iniciado",
+            lessons: "em_acompanhamento",
+            budget_revised: "nao_iniciado",
+            changes: "nao_iniciado",
+            closing: "nao_iniciado",
+            versions: "em_elaboracao"
+        },
+        instructions: {
+            objective: "Repositório central de governança, documentação e controle de mudanças do projeto corporativo conforme padrão IPMA-D (ICB4).",
+            manager: manager,
+            date: startDate,
+            documents_guide: (SEED_PROJECT.instructions && SEED_PROJECT.instructions.documents_guide) || []
+        },
+        tap: {
+            version_control: [{ version: "1", date: startDate, author: manager, notes: "Abertura formal do projeto" }],
+            project_name: name,
+            project_code: code,
+            company: company,
+            client: client,
+            sponsor_name: sponsor,
+            manager_name: manager,
+            budget_limit: budget,
+            start_date: startDate,
+            end_date: endDate,
+            estimated_duration: duration,
+            doc_objective: "Autorizar formalmente o início do projeto, atribuir principais responsáveis e documentar requisitos iniciais, principais entregas, premissas e restrições.",
+            project_alignment: `Alinhado ao plano estratégico corporativo da empresa ${company}.`,
+            justification: "",
+            objective: `Planejar, gerenciar e executar as entregas do projeto ${name} dentro dos prazos, padrões de qualidade e teto orçamentário aprovados de ${budget}.`,
+            scope_description: "",
+            milestones: [
+                `Marco 1: Início e autorização do projeto (${startDate})`,
+                `Marco 2: Homologação do escopo e planejamento técnico`,
+                `Marco 3: Conclusão das entregas e auditoria de qualidade`,
+                `Marco Final: Encerramento formal e homologação do Sponsor (${endDate})`
+            ],
+            main_stakeholders: `${sponsor} (Sponsor), ${client} (Cliente), ${manager} (GP).`,
+            team: [ `${manager} (Gerente do Projeto)` ],
+            risks: [],
+            critical_success_factors: [
+                `Cumprimento estrito do teto orçamentário de ${budget}.`,
+                `Entrega tempestiva até a data limite de ${endDate}.`,
+                `Aceite formal de 100% das entregas pelo Patrocinador e Cliente.`
+            ],
+            assumptions: [
+                "Disponibilidade contínua dos recursos humanos e financeiros alocados.",
+                "Canais de comunicação e governança ativos e funcionais."
+            ],
+            constraints: [
+                `Teto Orçamentário Improrrogável: ${budget}.`,
+                `Prazo Limite de Conclusão: ${endDate}.`
+            ],
+            approval_date: startDate
+        },
+        scope_statement: {
+            project_name: name,
+            code: code,
+            client: client,
+            classification: classification,
+            date: startDate,
+            objective: `Definir claramente o escopo homologado do projeto ${name}, garantindo o alinhamento entre todas as partes interessadas.`,
+            justification: "",
+            description: "",
+            deliverables: [],
+            exclusions: [
+                "Atividades operacionais de rotina não vinculadas aos pacotes de entrega do projeto.",
+                "Custos ou aquisições adicionais não previstos na linha de base sem solicitação de mudança formal aprovada."
+            ],
+            assumptions: [],
+            value_chain_processes: [
+                "Declaração de Escopo e EAP;",
+                "Cronograma e Matriz RACI;",
+                "Plano de Riscos e Qualidade;",
+                "Orçamento e Aquisições;",
+                "Termo de Encerramento com Lições Aprendidas."
+            ]
+        },
+        wbs_nodes: [
+            { id: "1.0", name: "Iniciação & Governança", leader: manager, type: "phase", children: [] },
+            { id: "2.0", name: "Planejamento & Engenharia", leader: manager, type: "phase", children: [] },
+            { id: "3.0", name: "Execução & Entregas", leader: manager, type: "phase", children: [] },
+            { id: "4.0", name: "Qualidade & Monitoramento", leader: manager, type: "phase", children: [] },
+            { id: "5.0", name: "Encerramento Formal", leader: manager, type: "phase", children: [] }
+        ],
+        schedule: [
+            { id: 1, milestone: "Início do projeto e TAP homologado", responsible: manager, duration: "Marco", delivery_date: startDate, status: "Concluído" },
+            { id: 2, milestone: "Escopo e EAP aprovados", responsible: manager, duration: "Marco", delivery_date: startDate, status: "Planejado" },
+            { id: 3, milestone: "Conclusão das entregas e testes de qualidade", responsible: manager, duration: "Marco", delivery_date: endDate, status: "Planejado" },
+            { id: 4, milestone: "Encerramento e homologação final", responsible: sponsor, duration: "Marco", delivery_date: endDate, status: "Planejado" }
+        ],
+        resources: {
+            shifts: [
+                { shift: "Manhã", mon: "09:00", tue: "09:00", wed: "09:00", thu: "09:00", fri: "09:00" },
+                { shift: "Tarde", mon: "18:00", tue: "18:00", wed: "18:00", thu: "18:00", fri: "18:00" }
+            ],
+            team: [
+                { name: manager, dept: "Gerente do Projeto", email: "", phone: "", cell: "" }
+            ]
+        },
+        stakeholders: [
+            { id: 1, name: sponsor, role: "Patrocinador (Sponsor)", power: 3, power_label: "Alto", interest: 2, interest_label: "Alto", strategy: "Gerenciar de perto" },
+            ...(client && client !== sponsor ? [{ id: 2, name: client, role: "Cliente Contratante", power: 3, power_label: "Alto", interest: 2, interest_label: "Alto", strategy: "Gerenciar de perto" }] : [])
+        ],
+        raci_matrix: {
+            legend: {
+                R: "Responsável (Somente um responsável pela entrega)",
+                Rv: "Revisão (Responsável pela revisão técnica)",
+                A: "Aprovação (Responsável pela aprovação formal)",
+                C: "Consultado (Pessoa a ser consultada antes da decisão)",
+                I: "Informado (Pessoa a ser informada da decisão tomada)",
+                P: "Participante (Pessoa que suporta ou participa da execução)"
+            },
+            activities: [
+                { id: "act-1", phase: "Iniciação", sub: "Inic.", name: "Identificar partes interessadas" },
+                { id: "act-2", phase: "Iniciação", sub: "Inic.", name: "Desenvolver o TAP" },
+                { id: "act-3", phase: "Planejamento", sub: "Escopo", name: "Coletar requisitos e escopo" },
+                { id: "act-4", phase: "Planejamento", sub: "Escopo", name: "Criar a EAP / WBS" },
+                { id: "act-5", phase: "Planejamento", sub: "Tempo", name: "Desenvolver o cronograma" },
+                { id: "act-6", phase: "Planejamento", sub: "Custos", name: "Elaborar orçamento Linha Base" },
+                { id: "act-7", phase: "Execução", sub: "Exec.", name: "Executar entregas do escopo" },
+                { id: "act-8", phase: "Monitoramento", sub: "Qual.", name: "Auditoria de qualidade e aceite" },
+                { id: "act-9", phase: "Encerramento", sub: "Enc.", name: "Termo de encerramento e lições" }
+            ],
+            members: [
+                {
+                    name: manager,
+                    role: "Gerente do Projeto",
+                    roles_map: { "act-1": "R", "act-2": "R", "act-3": "R", "act-4": "R", "act-5": "R", "act-6": "R", "act-7": "R", "act-8": "Rv", "act-9": "R" }
+                },
+                {
+                    name: sponsor,
+                    role: "Patrocinador",
+                    roles_map: { "act-1": "A", "act-2": "A", "act-3": "A", "act-4": "A", "act-5": "A", "act-6": "A", "act-7": "I", "act-8": "A", "act-9": "A" }
+                }
+            ]
+        },
+        budget_baseline: {
+            name: "Orçamento 1 (Linha de Base)",
+            items: [],
+            project_cost: 0,
+            contingency_reserve: 0,
+            final_cost: 0
+        },
+        budget_revised: {
+            name: "Orçamento 2 (Revisado)",
+            items: [],
+            project_cost: 0,
+            contingency_reserve: 0,
+            final_cost: 0,
+            justification: ""
+        },
+        quality: {
+            checklist: [
+                { id: 1, section: "DOCUMENTAÇÃO", question: "O projeto fez uso de um macro planning e TAP formal?", status: "SIM" },
+                { id: 2, section: "DOCUMENTAÇÃO", question: "O cumprimento do cronograma e marcos foi acompanhado?", status: "SIM" },
+                { id: 3, section: "DOCUMENTAÇÃO", question: "A EAP contemplou as fases de planejamento e execução?", status: "SIM" },
+                { id: 4, section: "DOCUMENTAÇÃO", question: "Os gastos atendem ao teto orçamentário previsto?", status: "SIM" },
+                { id: 5, section: "DOCUMENTAÇÃO", question: "Os papéis da equipe na Matriz RACI foram formalizados?", status: "SIM" },
+                { id: 6, section: "DOCUMENTAÇÃO", question: "O escopo sofreu alteração com controle formal de mudanças?", status: "NÃO" },
+                { id: 7, section: "DOCUMENTAÇÃO", question: "As entregas do escopo foram aprovadas pelo sponsor?", status: "SIM" },
+                { id: 8, section: "EXECUÇÃO", question: "As entregas do projeto cumpriram os critérios técnicos homologados?", status: "SIM" },
+                { id: 9, section: "EXECUÇÃO", question: "Houve desperdício crítico de recursos ou materiais?", status: "NÃO" },
+                { id: 10, section: "EXECUÇÃO", question: "O projeto atendeu requisitos de sustentabilidade e conformidade corporativa?", status: "SIM" },
+                { id: 11, section: "EXECUÇÃO", question: "Os riscos foram identificados, monitorados e mitigados?", status: "SIM" },
+                { id: 12, section: "EXECUÇÃO", question: "Os fornecedores atenderam aos requisitos de prazo e qualidade?", status: "SIM" }
+            ],
+            procedures: "O controle de qualidade será realizado na conclusão de cada entrega antes de seu envio para homologação final, utilizando checklists de verificação documental e técnica.",
+            monitoring: []
+        },
+        risks_plan: {
+            author: manager,
+            doc_number: "PR-01",
+            items: []
+        },
+        lessons_learned: {
+            phases_records: [],
+            reflective_questions: {
+                what_we_already_do: "",
+                what_we_must_stop_doing: "",
+                what_we_must_start_doing: "",
+                what_we_must_improve: ""
+            }
+        },
+        communication_plan: [],
+        change_requests: [],
+        closing_statement: {
+            project_name: name,
+            date: endDate,
+            manager: manager,
+            client_rep: client || sponsor,
+            classification: classification,
+            deliverables: [],
+            status: "Iniciação",
+            evaluation: "Pendente",
+            justification: "",
+            conclusions: "",
+            recommendation: "",
+            approver: sponsor,
+            approval_date: endDate,
+            authorizers: [
+                { name: `${manager} (Gerente de Projeto)`, email: "", contact: "" },
+                { name: `${sponsor} (Patrocinador)`, email: "", contact: "" }
+            ]
+        },
+        version_control: [
+            { id: 1, date: startDate, document: "Termo de Abertura do Projeto", prev_version: "0", curr_version: "1", responsible: manager, description: "Criação do projeto" }
+        ]
+    };
+
+    return newProj;
+}
+
+function syncProjectCrossBindings(p) {
+    if (!p) return;
+
+    // 1. Empresa Executora
+    if (p.company) {
+        if (!p.tap) p.tap = {};
+        p.tap.company = p.company;
+        const compBadge = document.getElementById('companyBadge');
+        if (compBadge) compBadge.textContent = p.company;
+        const subBrand = document.getElementById('headerSubBrand');
+        if (subBrand) subBrand.textContent = `${p.company} | Framework IPMA-D`;
+    }
+
+    // 2. Cliente Contratante
+    if (p.client) {
+        if (!p.tap) p.tap = {};
+        p.tap.client = p.client;
+        if (!p.scope_statement) p.scope_statement = {};
+        p.scope_statement.client = p.client;
+        if (!p.closing_statement) p.closing_statement = {};
+        if (!p.closing_statement.client_rep || p.closing_statement.client_rep === 'Cliente Contratante' || p.closing_statement.client_rep.includes('Cliente')) {
+            p.closing_statement.client_rep = p.client;
+        }
+        if (!p.stakeholders) p.stakeholders = [];
+        const clientSh = p.stakeholders.find(s => s.role && (s.role.includes('Cliente') || s.role.includes('Contratante')));
+        if (clientSh) {
+            clientSh.name = p.client;
+        } else if (p.client !== p.sponsor) {
+            p.stakeholders.push({
+                id: p.stakeholders.length + 1,
+                name: p.client,
+                role: 'Cliente Contratante',
+                power: 3,
+                power_label: 'Alto',
+                interest: 2,
+                interest_label: 'Alto',
+                strategy: 'Gerenciar de perto'
+            });
+        }
+    }
+
+    // 3. Nome e Código do Projeto
+    if (p.name) {
+        if (!p.tap) p.tap = {};
+        p.tap.project_name = p.name;
+        if (!p.scope_statement) p.scope_statement = {};
+        p.scope_statement.project_name = p.name;
+        if (!p.closing_statement) p.closing_statement = {};
+        p.closing_statement.project_name = p.name;
+    }
+    if (p.code) {
+        if (!p.tap) p.tap = {};
+        p.tap.project_code = p.code;
+        if (!p.scope_statement) p.scope_statement = {};
+        p.scope_statement.code = p.code;
+    }
+
+    // 4. Patrocinador (Sponsor)
+    const sponsorName = p.sponsor || (p.tap && p.tap.sponsor_name);
+    if (sponsorName) {
+        p.sponsor = sponsorName;
+        if (!p.tap) p.tap = {};
+        p.tap.sponsor_name = sponsorName;
+
+        // Matriz de Stakeholders
+        if (!p.stakeholders) p.stakeholders = [];
+        const sponsorSh = p.stakeholders.find(s => s.role && (s.role.includes('Sponsor') || s.role.includes('Patrocinador')));
+        if (sponsorSh) {
+            sponsorSh.name = sponsorName;
+            sponsorSh.power = 3;
+            sponsorSh.interest = 2;
+            sponsorSh.strategy = 'Gerenciar de perto';
+        } else {
+            p.stakeholders.unshift({
+                id: 1,
+                name: sponsorName,
+                role: 'Patrocinador (Sponsor)',
+                power: 3,
+                power_label: 'Alto',
+                interest: 2,
+                interest_label: 'Alto',
+                strategy: 'Gerenciar de perto'
+            });
+        }
+
+        // Matriz RACI
+        if (!p.raci_matrix) p.raci_matrix = { members: [], activities: [] };
+        if (!p.raci_matrix.members) p.raci_matrix.members = [];
+        let sponsorRaci = p.raci_matrix.members.find(m => m.role && (m.role.includes('Sponsor') || m.role.includes('Patrocinador')));
+        if (sponsorRaci) {
+            sponsorRaci.name = sponsorName;
+        } else {
+            sponsorRaci = {
+                name: sponsorName,
+                role: 'Patrocinador',
+                roles_map: {}
+            };
+            p.raci_matrix.members.push(sponsorRaci);
+        }
+        if (p.raci_matrix.activities) {
+            p.raci_matrix.activities.forEach(a => {
+                if (!sponsorRaci.roles_map[a.id]) sponsorRaci.roles_map[a.id] = 'A';
+            });
+        }
+
+        // Solicitação de Mudanças
+        if (p.change_requests && p.change_requests.length > 0) {
+            p.change_requests.forEach(cr => {
+                if (!cr.sponsor_approval || cr.sponsor_approval.includes('Aprovador') || cr.sponsor_approval === '') {
+                    cr.sponsor_approval = `${sponsorName} — Aprovador Formal`;
+                }
+            });
+        }
+
+        // Termo de Encerramento
+        if (!p.closing_statement) p.closing_statement = {};
+        p.closing_statement.approver = sponsorName;
+        if (!p.closing_statement.client_rep) {
+            p.closing_statement.client_rep = p.client || sponsorName;
+        }
+    }
+
+    // 5. Gerente do Projeto (GP)
+    const managerName = p.manager || (p.tap && p.tap.manager_name);
+    if (managerName) {
+        p.manager = managerName;
+        if (!p.tap) p.tap = {};
+        p.tap.manager_name = managerName;
+        if (!p.instructions) p.instructions = {};
+        p.instructions.manager = managerName;
+
+        // Recursos & Equipe
+        if (!p.resources) p.resources = { shifts: [], team: [] };
+        if (!p.resources.team) p.resources.team = [];
+        let gpMember = p.resources.team.find(m => m.dept && (m.dept.includes('Gerente') || m.dept.includes('GP')));
+        if (gpMember) {
+            gpMember.name = managerName;
+        } else {
+            p.resources.team.unshift({
+                name: managerName,
+                dept: 'Gerente de Projeto',
+                email: p.manager_email || '',
+                phone: p.manager_phone || '',
+                cell: ''
+            });
+        }
+
+        // Matriz RACI
+        if (!p.raci_matrix) p.raci_matrix = { members: [], activities: [] };
+        if (!p.raci_matrix.members) p.raci_matrix.members = [];
+        let gpRaci = p.raci_matrix.members.find(m => m.role && (m.role.includes('Gerente') || m.role.includes('GP')));
+        if (gpRaci) {
+            gpRaci.name = managerName;
+        } else {
+            gpRaci = {
+                name: managerName,
+                role: 'Gerente de Projeto',
+                roles_map: {}
+            };
+            p.raci_matrix.members.unshift(gpRaci);
+        }
+        if (p.raci_matrix.activities) {
+            p.raci_matrix.activities.forEach(a => {
+                if (!gpRaci.roles_map[a.id]) gpRaci.roles_map[a.id] = 'R';
+            });
+        }
+
+        // Termo de Encerramento
+        if (!p.closing_statement) p.closing_statement = {};
+        p.closing_statement.manager = managerName;
+    }
+
+    // 6. Prazos e Datas
+    const startDate = p.start_date || p.date;
+    const endDate = p.end_date;
+    if (startDate) {
+        if (!p.tap) p.tap = {};
+        p.tap.start_date = startDate;
+        if (p.schedule && p.schedule.length > 0) {
+            p.schedule[0].delivery_date = startDate;
+        }
+    }
+    if (endDate) {
+        if (!p.tap) p.tap = {};
+        p.tap.end_date = endDate;
+        if (p.schedule && p.schedule.length > 0) {
+            p.schedule[p.schedule.length - 1].delivery_date = endDate;
+        }
+        if (!p.closing_statement) p.closing_statement = {};
+        p.closing_statement.date = endDate;
+        p.closing_statement.approval_date = endDate;
+    }
+
+    // 7. Teto Orçamentário
+    const budgetLimit = p.budget_limit || (p.tap && p.tap.budget_limit);
+    if (budgetLimit) {
+        p.budget_limit = budgetLimit;
+        if (!p.tap) p.tap = {};
+        p.tap.budget_limit = budgetLimit;
+    }
+
+    // 8. Equipe de Recursos alimentando RACI
+    if (p.resources && p.resources.team && p.raci_matrix && p.raci_matrix.members) {
+        p.resources.team.forEach(tm => {
+            if (!tm.name) return;
+            const existing = p.raci_matrix.members.find(m => m.name && m.name.toLowerCase() === tm.name.toLowerCase());
+            if (!existing) {
+                p.raci_matrix.members.push({
+                    name: tm.name,
+                    role: tm.dept || 'Especialista',
+                    roles_map: {}
+                });
+            }
+        });
+    }
+
+    // 9. Entregas do Escopo sincronizando com Termo de Encerramento
+    if (p.scope_statement && p.scope_statement.deliverables && p.closing_statement) {
+        if (!p.closing_statement.deliverables || p.closing_statement.deliverables.length === 0) {
+            p.closing_statement.deliverables = p.scope_statement.deliverables.map((d, idx) => ({
+                id: d.id || idx + 1,
+                description: d.name,
+                responsible: p.manager || 'GP'
+            }));
+        }
+    }
+
+    // 10. Orçamento 1 para Orçamento 2 (inicialização)
+    if (p.budget_baseline && p.budget_baseline.items && p.budget_baseline.items.length > 0 && p.budget_revised) {
+        if (!p.budget_revised.items || p.budget_revised.items.length === 0) {
+            p.budget_revised.items = JSON.parse(JSON.stringify(p.budget_baseline.items));
+            p.budget_revised.project_cost = p.budget_baseline.project_cost;
+            p.budget_revised.contingency_reserve = p.budget_baseline.contingency_reserve;
+            p.budget_revised.final_cost = p.budget_baseline.final_cost;
+        }
+    }
+}
+
+function updateDatalistTeam() {
+    const datalist = document.getElementById('projectTeamDatalist');
+    if (!datalist || !project) return;
+    const names = new Set();
+    if (project.manager) names.add(project.manager);
+    if (project.sponsor) names.add(project.sponsor);
+    if (project.client) names.add(project.client);
+    if (project.resources && project.resources.team) {
+        project.resources.team.forEach(t => { if (t.name) names.add(t.name); });
+    }
+    if (project.stakeholders) {
+        project.stakeholders.forEach(s => { if (s.name) names.add(s.name); });
+    }
+    datalist.innerHTML = Array.from(names).map(n => `<option value="${n}">`).join('');
+}
+
+window.updateProjectMasterField = function(field, value) {
+    const p = (typeof project !== 'undefined' && project) || (typeof window !== 'undefined' && window.project);
+    if (!p) return;
+    p[field] = value;
+    if (field === 'sponsor' && p.tap) p.tap.sponsor_name = value;
+    if (field === 'manager' && p.tap) p.tap.manager_name = value;
+    if (field === 'budget_limit' && p.tap) p.tap.budget_limit = value;
+    if (field === 'name' && p.tap) p.tap.project_name = value;
+    if (field === 'code' && p.tap) p.tap.project_code = value;
+    if (field === 'client' && p.tap) p.tap.client = value;
+    if (field === 'company' && p.tap) p.tap.company = value;
+    if (field === 'start_date' && p.tap) p.tap.start_date = value;
+    if (field === 'end_date' && p.tap) p.tap.end_date = value;
+
+    syncProjectCrossBindings(p);
+    updateDatalistTeam();
+
+    if (typeof project !== 'undefined') project = p;
+    const select = document.getElementById('projectSelector');
+    if (select) {
+        const opt = select.querySelector(`option[value="${p.id}"]`);
+        if (opt) {
+            opt.textContent = p.id === 'proj-vertex-londrina-360'
+                ? `${p.code} - ${p.name} (Modelo Lendlease Referencial)`
+                : `${p.code} - ${p.name} (${p.company || 'Organização'})`;
+        }
+    }
+};
+
+window.copyBudget1ToBudget2 = function() {
+    const p = (typeof project !== 'undefined' && project) || (typeof window !== 'undefined' && window.project);
+    if (!p) return;
+    if (!p.budget_baseline || !p.budget_baseline.items || p.budget_baseline.items.length === 0) {
+        showToast('Orçamento 1 (Linha de Base) ainda não possui itens cadastrados.', 'warning');
+        return;
+    }
+    if (!p.budget_revised) p.budget_revised = { items: [], total_cost: 0 };
+    p.budget_revised.items = JSON.parse(JSON.stringify(p.budget_baseline.items));
+    p.budget_revised.project_cost = p.budget_baseline.project_cost;
+    p.budget_revised.contingency_reserve = p.budget_baseline.contingency_reserve;
+    p.budget_revised.final_cost = p.budget_baseline.final_cost;
+    showToast('📋 Insumos da Linha de Base copiados para o Orçamento Revisado!', 'success');
+    renderCurrentTab();
+};
+
+window.syncScopeToClosingDeliverables = function(p = project, notify = false) {
+    if (!p || !p.scope_statement || !p.scope_statement.deliverables) return;
+    if (!p.closing_statement) p.closing_statement = { deliverables: [] };
+    p.closing_statement.deliverables = p.scope_statement.deliverables.map((d, idx) => ({
+        id: d.id || idx + 1,
+        description: d.name,
+        responsible: p.manager || 'GP'
+    }));
+    if (notify) {
+        showToast('🔄 Entregas sincronizadas com o Termo de Encerramento!', 'success');
+        renderCurrentTab();
+    }
+};
+
+window.syncTeamToRaciAndDatalist = function(p = project) {
+    if (!p) return;
+    syncProjectCrossBindings(p);
+    updateDatalistTeam();
+};
 
 function openNewProjectModal() {
     currentWizardStep = 1;
@@ -272,7 +850,7 @@ async function handleCreateProject(e) {
     const sponsor = document.getElementById('wizSponsor').value.trim();
     const budget = document.getElementById('wizBudget').value.trim();
     const templateRadio = document.querySelector('input[name="wizTemplateMode"]:checked');
-    const clone_template = templateRadio ? (templateRadio.value === 'clone') : true;
+    const clone_template = templateRadio ? (templateRadio.value === 'clone') : false;
 
     if (!company) {
         showToast('Informe o Nome da Empresa (Organização Executora).', 'warning');
@@ -300,83 +878,26 @@ async function handleCreateProject(e) {
         newProj.start_date = startDate || "2026-11-01";
         newProj.end_date = endDate || "2027-11-01";
         newProj.duration = duration || "12 meses";
-        newProj.manager = manager || "Gerente de Projeto";
+        newProj.manager = manager || "Gerente do Projeto";
         newProj.sponsor = sponsor || "Patrocinador";
         newProj.budget_limit = budget || "R$ 1.000.000,00";
-
-        if (newProj.tap) {
-            newProj.tap.company = company;
-            newProj.tap.project_name = name;
-            newProj.tap.project_code = code;
-            newProj.tap.sponsor_name = sponsor || "Patrocinador";
-            newProj.tap.manager_name = manager || "Gerente de Projeto";
-            newProj.tap.budget_limit = budget || "R$ 1.000.000,00";
-            newProj.tap.start_date = startDate || "2026-11-01";
-            newProj.tap.end_date = endDate || "2027-11-01";
-            newProj.tap.estimated_duration = duration || "12 meses";
-        }
+        syncProjectCrossBindings(newProj);
     } else {
-        newProj = {
+        newProj = createCleanProjectData({
             id: newId,
             company,
-            client: client || "Cliente Contratante",
+            client,
             name,
             code,
-            classification: classification || "CORPORATIVO",
-            date: startDate || "2026-11-01",
-            start_date: startDate || "2026-11-01",
-            end_date: endDate || "2027-11-01",
-            duration: duration || "12 meses",
-            manager: manager || "Gerente de Projeto",
-            sponsor: sponsor || "Patrocinador",
-            budget_limit: budget || "R$ 1.000.000,00",
-            status: "Iniciação",
-            doc_status: {
-                instructions: "em_elaboracao",
-                tap: "em_elaboracao",
-                stakeholders: "nao_iniciado",
-                scope: "nao_iniciado",
-                wbs: "nao_iniciado",
-                schedule: "nao_iniciado",
-                raci: "nao_iniciado",
-                budget: "nao_iniciado",
-                risks: "nao_iniciado",
-                communication: "nao_iniciado",
-                quality: "nao_iniciado",
-                resources: "nao_iniciado",
-                lessons: "em_acompanhamento",
-                budget_revised: "nao_iniciado",
-                changes: "nao_iniciado",
-                closing: "nao_iniciado",
-                versions: "em_elaboracao"
-            },
-            tap: {
-                company, project_name: name, project_code: code,
-                sponsor_name: sponsor || "Patrocinador",
-                manager_name: manager || "Gerente de Projeto",
-                budget_limit: budget || "R$ 1.000.000,00",
-                start_date: startDate || "2026-11-01",
-                end_date: endDate || "2027-11-01",
-                estimated_duration: duration || "12 meses",
-                project_justification: "", smart_objective: "", macro_scope: "",
-                milestones_gates: [], critical_success_factors: [], assumptions: [], constraints: []
-            },
-            scope_statement: { deliverables: [], exclusions: [] },
-            wbs_nodes: [],
-            schedule: [],
-            resources: { members: [] },
-            raci_matrix: { members: [], activities: [] },
-            budget_baseline: { items: [], total_cost: 0 },
-            budget_revised: { items: [], total_cost: 0 },
-            quality: { checklist: [], monitoring: [] },
-            risks_plan: { items: [] },
-            stakeholders: [],
-            lessons_learned: { phases_records: [], questions: {} },
-            communication_plan: [],
-            change_requests: [],
-            closing_statement: { deliverables: [] },
-            version_control: []
-        };
+            classification,
+            startDate,
+            endDate,
+            duration,
+            manager,
+            sponsor,
+            budget
+        });
+        syncProjectCrossBindings(newProj);
     }
 
     allProjects.push(newProj);
@@ -1118,34 +1639,34 @@ function renderTap(c) {
             <div class="grid-3">
                 <div class="form-group">
                     <label class="form-label">Organização Executora (Empresa):</label>
-                    <input type="text" class="form-control" value="${project.company || ''}" onchange="project.company = this.value; document.getElementById('companyBadge').textContent = this.value; document.getElementById('headerSubBrand').textContent = this.value + ' | Framework ICB4';">
+                    <input type="text" class="form-control" value="${project.company || ''}" onchange="updateProjectMasterField('company', this.value);">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Cliente / Contratante:</label>
-                    <input type="text" class="form-control" value="${project.client || ''}" onchange="project.client = this.value">
+                    <input type="text" class="form-control" value="${project.client || ''}" onchange="updateProjectMasterField('client', this.value);">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Nome do Projeto:</label>
-                    <input type="text" class="form-control" value="${tap.project_name || project.name}" onchange="project.tap.project_name = this.value; project.name = this.value">
+                    <input type="text" class="form-control" value="${tap.project_name || project.name}" onchange="updateProjectMasterField('name', this.value);">
                 </div>
             </div>
             <div class="grid-3">
                 <div class="form-group">
                     <label class="form-label">Data de Início:</label>
-                    <input type="date" class="form-control" value="${project.start_date || project.date || '2026-10-23'}" onchange="project.start_date = this.value; project.date = this.value;">
+                    <input type="date" class="form-control" value="${project.start_date || project.date || '2026-10-23'}" onchange="updateProjectMasterField('start_date', this.value);">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Prazo Previsto de Conclusão:</label>
-                    <input type="date" class="form-control" value="${project.end_date || ''}" onchange="project.end_date = this.value;">
+                    <input type="date" class="form-control" value="${project.end_date || ''}" onchange="updateProjectMasterField('end_date', this.value);">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Duração / Prazo Estimado:</label>
-                    <input type="text" class="form-control" value="${tap.estimated_duration || project.duration || ''}" onchange="project.tap.estimated_duration = this.value; project.duration = this.value;">
+                    <input type="text" class="form-control" value="${tap.estimated_duration || project.duration || ''}" onchange="updateProjectMasterField('duration', this.value);">
                 </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Disponibilidade Orçamentária Autorizada:</label>
-                <input type="text" class="form-control" value="${tap.budget_limit || project.budget_limit || ''}" onchange="project.tap.budget_limit = this.value; project.budget_limit = this.value;">
+                <input type="text" class="form-control" value="${tap.budget_limit || project.budget_limit || ''}" onchange="updateProjectMasterField('budget_limit', this.value);">
             </div>
             <div class="form-group">
                 <label class="form-label">Objetivo do Documento:</label>
@@ -1207,14 +1728,14 @@ function renderTap(c) {
                     <strong style="color:#0284c7;">Patrocinador do Projeto (Sponsor)</strong>
                     <div class="form-group" style="margin-top:10px;">
                         <label class="form-label">Nome do Patrocinador:</label>
-                        <input type="text" class="form-control" value="${tap.sponsor_name || project.sponsor}" onchange="project.tap.sponsor_name = this.value; project.sponsor = this.value">
+                        <input type="text" class="form-control" value="${tap.sponsor_name || project.sponsor}" onchange="updateProjectMasterField('sponsor', this.value);">
                     </div>
                 </div>
                 <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:16px;">
                     <strong style="color:#0284c7;">Gerente do Projeto (GP)</strong>
                     <div class="form-group" style="margin-top:10px;">
                         <label class="form-label">Nome do Gerente:</label>
-                        <input type="text" class="form-control" value="${tap.manager_name || project.manager}" onchange="project.tap.manager_name = this.value; project.manager = this.value">
+                        <input type="text" class="form-control" value="${tap.manager_name || project.manager}" onchange="updateProjectMasterField('manager', this.value);">
                     </div>
                     <div class="grid-2">
                         <div class="form-group">
@@ -1246,11 +1767,11 @@ function renderScope(c) {
             <div class="grid-4">
                 <div class="form-group">
                     <label class="form-label">Nome do Projeto:</label>
-                    <input type="text" class="form-control" value="${s.project_name || project.name}" onchange="project.scope_statement.project_name = this.value">
+                    <input type="text" class="form-control" value="${s.project_name || project.name}" onchange="updateProjectMasterField('name', this.value);">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Sigla:</label>
-                    <input type="text" class="form-control" value="${s.code || project.code || 'PRJ'}" onchange="project.scope_statement.code = this.value">
+                    <input type="text" class="form-control" value="${s.code || project.code || 'PRJ'}" onchange="updateProjectMasterField('code', this.value);">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Classificação do Processo:</label>
@@ -1298,7 +1819,7 @@ function renderScope(c) {
                         ${delivs.map((d, idx) => `
                             <tr>
                                 <td><strong>${d.id || idx+1}</strong></td>
-                                <td><input type="text" class="form-control" style="padding:4px 8px;" value="${d.name}" onchange="project.scope_statement.deliverables[${idx}].name = this.value"></td>
+                                <td><input type="text" class="form-control" style="padding:4px 8px;" value="${d.name}" onchange="project.scope_statement.deliverables[${idx}].name = this.value; syncScopeToClosingDeliverables(project);"></td>
                                 <td><button class="btn btn-outline" style="padding:2px 6px; color:#dc2626;" onclick="deleteScopeDeliverable(${idx})">🗑️</button></td>
                             </tr>
                         `).join('')}
@@ -1466,7 +1987,7 @@ function renderSchedule(c) {
                             <tr>
                                 <td>${item.id || idx+1}</td>
                                 <td><input type="text" class="form-control" value="${item.milestone}" onchange="project.schedule[${idx}].milestone = this.value"></td>
-                                <td><input type="text" class="form-control" value="${item.responsible}" onchange="project.schedule[${idx}].responsible = this.value"></td>
+                                <td><input type="text" list="projectTeamDatalist" class="form-control" value="${item.responsible}" onchange="project.schedule[${idx}].responsible = this.value" placeholder="Selecione ou digite..."></td>
                                 <td><input type="text" class="form-control" value="${item.duration}" onchange="project.schedule[${idx}].duration = this.value"></td>
                                 <td><input type="text" class="form-control" value="${item.delivery_date}" onchange="project.schedule[${idx}].delivery_date = this.value"></td>
                                 <td>
@@ -1545,7 +2066,7 @@ function renderResources(c) {
                     <tbody>
                         ${team.map((m, idx) => `
                             <tr>
-                                <td><input type="text" class="form-control" value="${m.name}" onchange="project.resources.team[${idx}].name = this.value"></td>
+                                <td><input type="text" class="form-control" value="${m.name}" onchange="project.resources.team[${idx}].name = this.value; syncTeamToRaciAndDatalist(project);"></td>
                                 <td><input type="text" class="form-control" value="${m.dept}" onchange="project.resources.team[${idx}].dept = this.value"></td>
                                 <td><input type="text" class="form-control" value="${m.email}" onchange="project.resources.team[${idx}].email = this.value"></td>
                                 <td><input type="text" class="form-control" value="${m.phone}" onchange="project.resources.team[${idx}].phone = this.value"></td>
@@ -1660,6 +2181,27 @@ function renderBudget(c, focusRevised = false) {
     const docKey = focusRevised ? 'budget_revised' : 'budget';
     c.innerHTML = `
         ${renderDocLifecycleHeader(docKey, docTitle, phaseNum, phaseName, 'Controle financeiro detalhado com Linha de Base (Orçamento 1) e Orçamento Revisado em execução (Orçamento 2).')}
+
+        <div class="card" style="background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%); border-left: 4px solid #0284c7; margin-bottom: 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div>
+                    <span style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; font-weight:700; color:#0369a1;">Teto Orçamentário Autorizado (TAP & Contrato):</span>
+                    <div style="font-size:20px; font-weight:900; color:#0f172a; margin-top:2px;">
+                        ${project.budget_limit || (project.tap && project.tap.budget_limit) || 'R$ 1.000.000,00'}
+                    </div>
+                </div>
+                <div style="display:flex; gap:16px;">
+                    <div style="background:white; border:1px solid #cbd5e1; border-radius:8px; padding:6px 12px; text-align:center;">
+                        <span style="font-size:10.5px; color:#64748b; font-weight:600; display:block;">Orçamento 1 (Base):</span>
+                        <strong style="font-size:13px; color:#0f172a;">R$ ${(b1.final_cost || 0).toLocaleString('pt-BR')}</strong>
+                    </div>
+                    <div style="background:white; border:1px solid #cbd5e1; border-radius:8px; padding:6px 12px; text-align:center;">
+                        <span style="font-size:10.5px; color:#64748b; font-weight:600; display:block;">Orçamento 2 (Revisado):</span>
+                        <strong style="font-size:13px; color:#15803d;">R$ ${(b2.final_cost || 0).toLocaleString('pt-BR')}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="grid-2">
             <!-- Orçamento 1 -->
@@ -1983,7 +2525,7 @@ function renderRisks(c) {
                                     <input type="text" class="form-control" placeholder="Estratégia de resposta" value="${r.strategy}" onchange="project.risks_plan.items[${idx}].strategy = this.value">
                                 </td>
                                 <td>
-                                    <input type="text" class="form-control" placeholder="Responsável" value="${r.responsible}" onchange="project.risks_plan.items[${idx}].responsible = this.value">
+                                    <input type="text" class="form-control" placeholder="Responsável" list="projectTeamDatalist" value="${r.responsible}" onchange="project.risks_plan.items[${idx}].responsible = this.value">
                                 </td>
                                 <td><button class="btn btn-outline" style="padding:2px 6px; color:#dc2626;" onclick="deleteRiskItem(${idx})">🗑️</button></td>
                             </tr>
@@ -2488,12 +3030,26 @@ function renderClosing(c) {
         </div>
 
         <div class="card">
-            <div class="card-title">Autorização e Assinatura de Encerramento</div>
-            <div class="grid-2">
+            <div class="card-title">Signatários & Homologação de Encerramento</div>
+            <div class="grid-3">
                 <div class="form-group">
-                    <label class="form-label">Responsável pela Aprovação:</label>
-                    <input type="text" class="form-control" value="${cl.approver || project.sponsor}" onchange="project.closing_statement.approver = this.value">
+                    <label class="form-label">Gerente de Projeto (Assinatura GP):</label>
+                    <input type="text" list="projectTeamDatalist" class="form-control" value="${cl.manager || project.manager || ''}" onchange="project.closing_statement.manager = this.value; project.manager = this.value; syncProjectCrossBindings(project);">
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Representante do Cliente / Contratante:</label>
+                    <input type="text" list="projectTeamDatalist" class="form-control" value="${cl.client_rep || project.client || ''}" onchange="project.closing_statement.client_rep = this.value; project.client = this.value; syncProjectCrossBindings(project);">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Patrocinador / Aprovador Formal (Sponsor):</label>
+                    <input type="text" list="projectTeamDatalist" class="form-control" value="${cl.approver || project.sponsor || ''}" onchange="project.closing_statement.approver = this.value; project.sponsor = this.value; syncProjectCrossBindings(project);">
+                </div>
+            </div>
+            <div class="form-group" style="margin-top:10px;">
+                <label class="form-label">Data de Homologação / Aceite Formal:</label>
+                <input type="date" class="form-control" value="${cl.approval_date || cl.date || project.end_date || project.date || ''}" onchange="project.closing_statement.approval_date = this.value; project.closing_statement.date = this.value;">
+            </div>
+        </div>
                 <div class="form-group">
                     <label class="form-label">Data da Assinatura:</label>
                     <input type="text" class="form-control" value="${cl.approval_date || project.date}" onchange="project.closing_statement.approval_date = this.value">
@@ -2640,3 +3196,6 @@ if (typeof module !== 'undefined' && module.exports) {
         showToast
     };
 }
+
+window.createCleanProjectData = createCleanProjectData;
+window.syncProjectCrossBindings = syncProjectCrossBindings;

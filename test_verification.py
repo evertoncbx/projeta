@@ -30,9 +30,15 @@ def run_tests():
         ("/supabase_schema_v2.sql", 200, None),
         ("/v2/", 200, "text/html"),
         ("/v2/index.html", 200, "text/html"),
-        ("/v2/assets/index-6IwR5QGb.js", 200, "application/javascript"),
-        ("/v2/assets/index-CTbPteOH.css", 200, "text/css"),
     ]
+
+    v2_assets_dir = os.path.join(DIRECTORY, "v2", "assets")
+    if os.path.exists(v2_assets_dir):
+        for f in sorted(os.listdir(v2_assets_dir)):
+            if f.endswith('.js'):
+                assets_to_test.append((f"/v2/assets/{f}", 200, "application/javascript"))
+            elif f.endswith('.css'):
+                assets_to_test.append((f"/v2/assets/{f}", 200, "text/css"))
 
     print("=== INICIANDO TESTES DE ASSETS E ROTAS DO PROJETA (V1 + V2) ===")
     all_ok = True

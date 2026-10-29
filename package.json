@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npx serve .",
     "dev": "npx serve .",
-    "test": "python test_verification.py"
+    "test": "node test_v1_cross_binding.js && python test_verification.py"
   },
   "keywords": [
     "ipma",
