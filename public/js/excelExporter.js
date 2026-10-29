@@ -12,12 +12,19 @@ async function exportProjectToExcel(project) {
             throw new Error('Biblioteca ExcelJS não carregada.');
         }
 
-        // Carrega o template oficial a partir da pasta pública ou fallback
-        let resp = await fetch('./template.xlsx');
-        if (!resp.ok) {
+        // Carrega o template oficial a partir da rota local ou fallback em nuvem
+        let resp = null;
+        try {
+            resp = await fetch('./template.xlsx');
+            if (!resp.ok) resp = await fetch('/template.xlsx');
+        } catch (e) {
+            console.warn('[ExcelExporter] Falha ao carregar template local, tentando fallback remoto:', e);
+        }
+
+        if (!resp || !resp.ok) {
             resp = await fetch('https://fvsrnuovfzcugkwdwixs.supabase.co/storage/v1/object/public/bridge-files/Template%20%20_%20Plano%20de%20Projeto%20-2026_Lendlease%20-%20Empresa%20Vertex%20Engenharia%20Brasil.xlsx');
         }
-        if (!resp.ok) throw new Error('Não foi possível carregar o template base do Excel.');
+        if (!resp || !resp.ok) throw new Error('Não foi possível carregar o template base do Excel.');
 
         const arrayBuffer = await resp.arrayBuffer();
         const wb = new ExcelJS.Workbook();

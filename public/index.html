@@ -33,12 +33,13 @@
             </div>
 
             <!-- Badges de Contexto -->
-            <span id="cloudBadge" class="badge" style="background:#059669; color:#fff; font-size:11px;" title="Conectado à Nuvem Supabase">☁️ Supabase Nuvem</span>
+            <span id="cloudBadge" class="badge" style="background:#059669; color:#fff; font-size:11px; cursor:pointer;" onclick="openCloudConfigModal()" title="Conectado à Nuvem Supabase (Clique para configurar)">☁️ Supabase Nuvem</span>
             <span id="companyBadge" class="badge" style="background:#0369a1; color:#fff; font-size:11px;" title="Organização Executora">Empresa</span>
             <span id="projectBadge" class="badge badge-info" style="font-size:11px;">CORPORATIVO</span>
             <span id="statusBadge" class="badge badge-success" style="font-size:11px;">Iniciação</span>
 
             <!-- Botões Globais de Ação -->
+            <button id="btnCloudSettings" class="btn btn-outline" style="padding:6px 10px; font-size:12px;" onclick="openCloudConfigModal()" title="Configurar conexão e credenciais do Supabase Nuvem">⚙️ Nuvem</button>
             <button id="btnSave" class="btn btn-success" title="Salvar todas as alterações feitas">💾 Salvar</button>
             <button id="btnExportExcel" class="btn btn-primary" title="Exportar para Excel exatamente no padrão do template oficial">📥 Exportar Excel</button>
             <button id="btnExportPdfAll" class="btn btn-outline" title="Gerar Dossiê do Projeto completo em PDF">📄 Dossiê PDF</button>

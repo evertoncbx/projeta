@@ -1,11 +1,21 @@
 {
   "name": "projeta",
   "version": "1.0.0",
-  "description": "PROJETA - Sistema de Gestão Estratégica de Projetos IPMA-D na Nuvem com Vercel e Supabase",
+  "description": "PROJETA - Sistema de Gestão Estratégica de Projetos IPMA-D (ICB4) na Nuvem com Vercel e Supabase",
+  "main": "index.html",
   "scripts": {
-    "start": "npx serve public"
+    "start": "npx serve .",
+    "dev": "npx serve .",
+    "build": "echo 'PROJETA: Deploy estatico pronto para Vercel'"
   },
-  "keywords": ["ipma", "icb4", "project-management", "supabase", "vercel"],
+  "keywords": [
+    "ipma",
+    "ipma-d",
+    "icb4",
+    "project-management",
+    "supabase",
+    "vercel"
+  ],
   "author": "Everton / Projeta",
   "license": "MIT"
 }
