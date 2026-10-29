@@ -413,3 +413,11 @@ window.copyProjetaSql = function() {
         alert('Script SQL:\n' + pre.innerText.trim());
     });
 };
+
+// Exporta globalmente para compatibilidade total
+if (typeof window !== 'undefined') {
+    window.ProjetaCloud = ProjetaCloud;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { ProjetaCloud };
+}
