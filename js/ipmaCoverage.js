@@ -48,18 +48,18 @@ const IPMA_COMPETENCES = {
           "Plano de Comunicação",
           "TAP (Partes Interessadas)"
         ],
-        "focus": "Mapeia os atores de alto poder e alto interesse (Sponsor, Facilitador, Fornecedor Bueno) e concorrência."
+        "focus": "Mapeia os atores de alto poder e alto interesse (Sponsor, Facilitador, Fornecedores Estratégicos) e concorrência."
       },
       {
         "code": "4.3.5",
         "name": "Cultura e valores",
         "definition": "Cultura organizacional de excelência, integridade, sustentabilidade e colaboração ética.",
         "artifacts": [
-          "Declaração de Escopo (ESG / TiO2)",
+          "Declaração de Escopo (Critérios ESG / Sustentabilidade)",
           "Qualidade (Sustentabilidade)",
           "Termo de Encerramento"
         ],
-        "focus": "Consolida os valores de sustentabilidade ativa (cimento geopolimérico) e transparência em auditoria."
+        "focus": "Consolida os valores de sustentabilidade ativa, conformidade e transparência em auditoria."
       }
     ]
   },
@@ -142,7 +142,7 @@ const IPMA_COMPETENCES = {
           "Solicitação de Mudanças nº 1",
           "Lições Aprendidas"
         ],
-        "focus": "Resolução da escassez de palitos com o fornecedor Bueno sem atrasar o marco de entrega (16:30)."
+        "focus": "Resolução de restrições críticas com fornecedores e insumos sem atrasar o marco de entrega homologado."
       },
       {
         "code": "4.4.8",
@@ -150,21 +150,21 @@ const IPMA_COMPETENCES = {
         "definition": "Pensamento inovador, adaptabilidade e soluções criativas para problemas não triviais.",
         "artifacts": [
           "EAP (Design Multifuncional)",
-          "Qualidade (Solução com Canudos e TiO2)",
+          "Qualidade (Soluções Técnicas)",
           "Solicitação de Mudanças"
         ],
-        "focus": "Adaptação da estrutura da torre com canudos plásticos mantendo autossustentação na escala 1:350."
+        "focus": "Adaptação técnica de estrutura e materiais mantendo padrões de qualidade e critérios de aceitação."
       },
       {
         "code": "4.4.9",
         "name": "Negociação",
         "definition": "Habilidade para obter acordos vantajosos e factíveis com fornecedores e partes interessadas.",
         "artifacts": [
-          "Orçamento 2 (Negociação Bueno)",
+          "Orçamento 2 (Revisado pós-aquisições)",
           "Solicitação de Mudanças",
           "Stakeholders"
         ],
-        "focus": "Negociação de kit substituto gerando economia líquida de R$ 700.000,00 sem comprometer a estabilidade."
+        "focus": "Negociação vantajosa de insumos e contratos gerando economia líquida e conformidade orçamentária."
       },
       {
         "code": "4.4.10",
@@ -276,7 +276,7 @@ const IPMA_COMPETENCES = {
           "Solicitação de Mudanças nº 1",
           "Plano de Riscos (R02)"
         ],
-        "focus": "Controle do fornecedor exclusivo Bueno, compra em kits fechados e controle de sobras."
+        "focus": "Controle rigoroso de fornecedores, compras conforme regulamento e gestão de sobras."
       },
       {
         "code": "4.5.10",

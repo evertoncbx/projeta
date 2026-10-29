@@ -68,6 +68,8 @@ async function loadProject(id) {
         if (stBadge) stBadge.textContent = project.status || 'Iniciação';
 
         updateSidebarStatusDots();
+        syncProjectCrossBindings(project);
+        updateDatalistTeam();
         renderCurrentTab();
     } catch (e) {
         showToast('Erro ao carregar projeto: ' + e.message, 'danger');
@@ -408,205 +410,242 @@ function createCleanProjectData(params) {
 function syncProjectCrossBindings(p) {
     if (!p) return;
 
+    const sponsorName = p.sponsor || (p.tap && p.tap.sponsor_name) || "Patrocinador";
+    const managerName = p.manager || (p.tap && p.tap.manager_name) || "Gerente do Projeto";
+    const clientName = p.client || (p.tap && p.tap.client) || "Cliente Contratante";
+    const companyName = p.company || (p.tap && p.tap.company) || "Empresa Executora";
+    const projectName = p.name || (p.tap && p.tap.project_name) || "Novo Projeto IPMA";
+    const projectCode = p.code || (p.tap && p.tap.project_code) || "PRJ";
+    const startDate = p.start_date || p.date || new Date().toISOString().split('T')[0];
+    const endDate = p.end_date || "2027-11-01";
+    const budgetLimit = p.budget_limit || (p.tap && p.tap.budget_limit) || "R$ 1.000.000,00";
+
     // 1. Empresa Executora
-    if (p.company) {
-        if (!p.tap) p.tap = {};
-        p.tap.company = p.company;
-        const compBadge = document.getElementById('companyBadge');
-        if (compBadge) compBadge.textContent = p.company;
-        const subBrand = document.getElementById('headerSubBrand');
-        if (subBrand) subBrand.textContent = `${p.company} | Framework IPMA-D`;
-    }
+    p.company = companyName;
+    if (!p.tap) p.tap = {};
+    p.tap.company = companyName;
+    const compBadge = document.getElementById('companyBadge');
+    if (compBadge) compBadge.textContent = companyName;
+    const subBrand = document.getElementById('headerSubBrand');
+    if (subBrand) subBrand.textContent = `${companyName} | Framework IPMA-D`;
 
     // 2. Cliente Contratante
-    if (p.client) {
-        if (!p.tap) p.tap = {};
-        p.tap.client = p.client;
-        if (!p.scope_statement) p.scope_statement = {};
-        p.scope_statement.client = p.client;
-        if (!p.closing_statement) p.closing_statement = {};
-        if (!p.closing_statement.client_rep || p.closing_statement.client_rep === 'Cliente Contratante' || p.closing_statement.client_rep.includes('Cliente')) {
-            p.closing_statement.client_rep = p.client;
-        }
-        if (!p.stakeholders) p.stakeholders = [];
-        const clientSh = p.stakeholders.find(s => s.role && (s.role.includes('Cliente') || s.role.includes('Contratante')));
-        if (clientSh) {
-            clientSh.name = p.client;
-        } else if (p.client !== p.sponsor) {
-            p.stakeholders.push({
-                id: p.stakeholders.length + 1,
-                name: p.client,
-                role: 'Cliente Contratante',
-                power: 3,
-                power_label: 'Alto',
-                interest: 2,
-                interest_label: 'Alto',
-                strategy: 'Gerenciar de perto'
-            });
-        }
+    p.client = clientName;
+    p.tap.client = clientName;
+    if (!p.scope_statement) p.scope_statement = {};
+    p.scope_statement.client = clientName;
+    if (!p.closing_statement) p.closing_statement = {};
+    p.closing_statement.client_rep = clientName;
+    if (!p.stakeholders) p.stakeholders = [];
+    let clientSh = p.stakeholders.find(s => s.role && (s.role.includes('Cliente') || s.role.includes('Contratante')));
+    if (clientSh) {
+        clientSh.name = clientName;
+        clientSh.power = 3;
+        clientSh.interest = 2;
+        clientSh.strategy = 'Gerenciar de perto';
+    } else if (clientName !== sponsorName) {
+        p.stakeholders.push({
+            id: p.stakeholders.length + 1,
+            name: clientName,
+            role: 'Cliente Contratante',
+            power: 3,
+            power_label: 'Alto',
+            interest: 2,
+            interest_label: 'Alto',
+            strategy: 'Gerenciar de perto'
+        });
     }
 
     // 3. Nome e Código do Projeto
-    if (p.name) {
-        if (!p.tap) p.tap = {};
-        p.tap.project_name = p.name;
-        if (!p.scope_statement) p.scope_statement = {};
-        p.scope_statement.project_name = p.name;
-        if (!p.closing_statement) p.closing_statement = {};
-        p.closing_statement.project_name = p.name;
-    }
-    if (p.code) {
-        if (!p.tap) p.tap = {};
-        p.tap.project_code = p.code;
-        if (!p.scope_statement) p.scope_statement = {};
-        p.scope_statement.code = p.code;
-    }
+    p.name = projectName;
+    p.code = projectCode;
+    p.tap.project_name = projectName;
+    p.tap.project_code = projectCode;
+    p.scope_statement.project_name = projectName;
+    p.scope_statement.code = projectCode;
+    p.closing_statement.project_name = projectName;
 
     // 4. Patrocinador (Sponsor)
-    const sponsorName = p.sponsor || (p.tap && p.tap.sponsor_name);
-    if (sponsorName) {
-        p.sponsor = sponsorName;
-        if (!p.tap) p.tap = {};
-        p.tap.sponsor_name = sponsorName;
+    p.sponsor = sponsorName;
+    p.tap.sponsor_name = sponsorName;
 
-        // Matriz de Stakeholders
-        if (!p.stakeholders) p.stakeholders = [];
-        const sponsorSh = p.stakeholders.find(s => s.role && (s.role.includes('Sponsor') || s.role.includes('Patrocinador')));
-        if (sponsorSh) {
-            sponsorSh.name = sponsorName;
-            sponsorSh.power = 3;
-            sponsorSh.interest = 2;
-            sponsorSh.strategy = 'Gerenciar de perto';
+    // Matriz de Stakeholders para Sponsor
+    let sponsorSh = p.stakeholders.find(s => s.role && (s.role.includes('Sponsor') || s.role.includes('Patrocinador')));
+    if (sponsorSh) {
+        sponsorSh.name = sponsorName;
+        sponsorSh.power = 3;
+        sponsorSh.power_label = 'Alto';
+        sponsorSh.interest = 2;
+        sponsorSh.interest_label = 'Alto';
+        sponsorSh.strategy = 'Gerenciar de perto';
+    } else {
+        p.stakeholders.unshift({
+            id: 1,
+            name: sponsorName,
+            role: 'Patrocinador (Sponsor)',
+            power: 3,
+            power_label: 'Alto',
+            interest: 2,
+            interest_label: 'Alto',
+            strategy: 'Gerenciar de perto'
+        });
+    }
+
+    // Matriz RACI para Sponsor
+    if (!p.raci_matrix) p.raci_matrix = { members: [], activities: [] };
+    if (!p.raci_matrix.members) p.raci_matrix.members = [];
+    let sponsorRaci = p.raci_matrix.members.find(m => m.role && (m.role.includes('Sponsor') || m.role.includes('Patrocinador')));
+    if (sponsorRaci) {
+        sponsorRaci.name = sponsorName;
+    } else {
+        sponsorRaci = {
+            name: sponsorName,
+            role: 'Patrocinador',
+            roles_map: {}
+        };
+        p.raci_matrix.members.push(sponsorRaci);
+    }
+    if (p.raci_matrix.activities) {
+        p.raci_matrix.activities.forEach(a => {
+            if (!sponsorRaci.roles_map[a.id]) sponsorRaci.roles_map[a.id] = 'A';
+        });
+    }
+
+    // Solicitação de Mudanças (Aprovador formal = Sponsor)
+    if (!p.change_requests || p.change_requests.length === 0) {
+        p.change_requests = [{
+            number: "1",
+            requester_name: managerName,
+            submitted_date: startDate,
+            priority: "Média",
+            status: "Pendente",
+            description: "",
+            reason: "",
+            impacts: { scope: "", cost: "", schedule: "", others: "" },
+            opinion: "",
+            sponsor_approval: `${sponsorName} — Aprovador Formal`,
+            manager_approval: `${managerName} — Gerente de Projeto`
+        }];
+    } else {
+        p.change_requests.forEach(cr => {
+            if (!cr.sponsor_approval || cr.sponsor_approval.includes('Aprovador') || cr.sponsor_approval.includes('Sponsor') || cr.sponsor_approval.includes('Patrocinador') || cr.sponsor_approval === '') {
+                cr.sponsor_approval = `${sponsorName} — Aprovador Formal`;
+            }
+        });
+    }
+
+    // Termo de Encerramento (Signatário de Homologação Sponsor)
+    p.closing_statement.approver = sponsorName;
+    if (!p.closing_statement.authorizers || p.closing_statement.authorizers.length === 0) {
+        p.closing_statement.authorizers = [
+            { name: `${managerName} (Gerente de Projeto)`, email: "", contact: "" },
+            { name: `${sponsorName} (Patrocinador)`, email: "", contact: "" }
+        ];
+    } else {
+        let spAuth = p.closing_statement.authorizers.find(a => a.name && (a.name.includes('Sponsor') || a.name.includes('Patrocinador')));
+        if (spAuth) {
+            spAuth.name = `${sponsorName} (Patrocinador)`;
         } else {
-            p.stakeholders.unshift({
-                id: 1,
-                name: sponsorName,
-                role: 'Patrocinador (Sponsor)',
-                power: 3,
-                power_label: 'Alto',
-                interest: 2,
-                interest_label: 'Alto',
-                strategy: 'Gerenciar de perto'
-            });
-        }
-
-        // Matriz RACI
-        if (!p.raci_matrix) p.raci_matrix = { members: [], activities: [] };
-        if (!p.raci_matrix.members) p.raci_matrix.members = [];
-        let sponsorRaci = p.raci_matrix.members.find(m => m.role && (m.role.includes('Sponsor') || m.role.includes('Patrocinador')));
-        if (sponsorRaci) {
-            sponsorRaci.name = sponsorName;
-        } else {
-            sponsorRaci = {
-                name: sponsorName,
-                role: 'Patrocinador',
-                roles_map: {}
-            };
-            p.raci_matrix.members.push(sponsorRaci);
-        }
-        if (p.raci_matrix.activities) {
-            p.raci_matrix.activities.forEach(a => {
-                if (!sponsorRaci.roles_map[a.id]) sponsorRaci.roles_map[a.id] = 'A';
-            });
-        }
-
-        // Solicitação de Mudanças
-        if (p.change_requests && p.change_requests.length > 0) {
-            p.change_requests.forEach(cr => {
-                if (!cr.sponsor_approval || cr.sponsor_approval.includes('Aprovador') || cr.sponsor_approval === '') {
-                    cr.sponsor_approval = `${sponsorName} — Aprovador Formal`;
-                }
-            });
-        }
-
-        // Termo de Encerramento
-        if (!p.closing_statement) p.closing_statement = {};
-        p.closing_statement.approver = sponsorName;
-        if (!p.closing_statement.client_rep) {
-            p.closing_statement.client_rep = p.client || sponsorName;
+            p.closing_statement.authorizers.push({ name: `${sponsorName} (Patrocinador)`, email: "", contact: "" });
         }
     }
 
     // 5. Gerente do Projeto (GP)
-    const managerName = p.manager || (p.tap && p.tap.manager_name);
-    if (managerName) {
-        p.manager = managerName;
-        if (!p.tap) p.tap = {};
-        p.tap.manager_name = managerName;
-        if (!p.instructions) p.instructions = {};
-        p.instructions.manager = managerName;
+    p.manager = managerName;
+    p.tap.manager_name = managerName;
+    if (!p.instructions) p.instructions = {};
+    p.instructions.manager = managerName;
 
-        // Recursos & Equipe
-        if (!p.resources) p.resources = { shifts: [], team: [] };
-        if (!p.resources.team) p.resources.team = [];
-        let gpMember = p.resources.team.find(m => m.dept && (m.dept.includes('Gerente') || m.dept.includes('GP')));
-        if (gpMember) {
-            gpMember.name = managerName;
-        } else {
-            p.resources.team.unshift({
-                name: managerName,
-                dept: 'Gerente de Projeto',
-                email: p.manager_email || '',
-                phone: p.manager_phone || '',
-                cell: ''
-            });
-        }
-
-        // Matriz RACI
-        if (!p.raci_matrix) p.raci_matrix = { members: [], activities: [] };
-        if (!p.raci_matrix.members) p.raci_matrix.members = [];
-        let gpRaci = p.raci_matrix.members.find(m => m.role && (m.role.includes('Gerente') || m.role.includes('GP')));
-        if (gpRaci) {
-            gpRaci.name = managerName;
-        } else {
-            gpRaci = {
-                name: managerName,
-                role: 'Gerente de Projeto',
-                roles_map: {}
-            };
-            p.raci_matrix.members.unshift(gpRaci);
-        }
-        if (p.raci_matrix.activities) {
-            p.raci_matrix.activities.forEach(a => {
-                if (!gpRaci.roles_map[a.id]) gpRaci.roles_map[a.id] = 'R';
-            });
-        }
-
-        // Termo de Encerramento
-        if (!p.closing_statement) p.closing_statement = {};
-        p.closing_statement.manager = managerName;
+    // Recursos & Equipe (Primeiro membro cadastrado como GP)
+    if (!p.resources) p.resources = { shifts: [], team: [] };
+    if (!p.resources.team) p.resources.team = [];
+    let gpMember = p.resources.team.find(m => m.dept && (m.dept.includes('Gerente') || m.dept.includes('GP')));
+    if (gpMember) {
+        gpMember.name = managerName;
+    } else {
+        p.resources.team.unshift({
+            name: managerName,
+            dept: 'Gerente de Projeto',
+            email: p.manager_email || '',
+            phone: p.manager_phone || '',
+            cell: ''
+        });
     }
 
-    // 6. Prazos e Datas
-    const startDate = p.start_date || p.date;
-    const endDate = p.end_date;
-    if (startDate) {
-        if (!p.tap) p.tap = {};
-        p.tap.start_date = startDate;
-        if (p.schedule && p.schedule.length > 0) {
-            p.schedule[0].delivery_date = startDate;
-        }
+    // Matriz RACI para GP (Papel R - Responsável)
+    let gpRaci = p.raci_matrix.members.find(m => m.role && (m.role.includes('Gerente') || m.role.includes('GP')));
+    if (gpRaci) {
+        gpRaci.name = managerName;
+    } else {
+        gpRaci = {
+            name: managerName,
+            role: 'Gerente de Projeto',
+            roles_map: {}
+        };
+        p.raci_matrix.members.unshift(gpRaci);
     }
-    if (endDate) {
-        if (!p.tap) p.tap = {};
-        p.tap.end_date = endDate;
-        if (p.schedule && p.schedule.length > 0) {
-            p.schedule[p.schedule.length - 1].delivery_date = endDate;
-        }
-        if (!p.closing_statement) p.closing_statement = {};
-        p.closing_statement.date = endDate;
-        p.closing_statement.approval_date = endDate;
+    if (p.raci_matrix.activities) {
+        p.raci_matrix.activities.forEach(a => {
+            if (!gpRaci.roles_map[a.id]) gpRaci.roles_map[a.id] = (a.id === 'act-8' ? 'Rv' : 'R');
+        });
     }
+
+    // Termo de Encerramento (Signatário GP)
+    p.closing_statement.manager = managerName;
+    let gpAuth = p.closing_statement.authorizers.find(a => a.name && (a.name.includes('Gerente') || a.name.includes('GP')));
+    if (gpAuth) {
+        gpAuth.name = `${managerName} (Gerente de Projeto)`;
+    } else {
+        p.closing_statement.authorizers.unshift({ name: `${managerName} (Gerente de Projeto)`, email: "", contact: "" });
+    }
+
+    // EAP e WBS: vincula líder padrão ao GP
+    if (p.wbs_nodes) {
+        p.wbs_nodes.forEach(ph => {
+            if (!ph.leader || ph.leader.includes('Gerente') || ph.leader === 'GP') {
+                ph.leader = managerName;
+            }
+        });
+    }
+
+    // Solicitação de Mudanças: requisitante e aprovação do GP
+    if (p.change_requests && p.change_requests.length > 0) {
+        p.change_requests.forEach(cr => {
+            if (!cr.requester_name || cr.requester_name.includes('Gerente') || cr.requester_name === '') {
+                cr.requester_name = managerName;
+            }
+            if (!cr.manager_approval || cr.manager_approval.includes('Gerente') || cr.manager_approval === '') {
+                cr.manager_approval = `${managerName} — Gerente de Projeto`;
+            }
+        });
+    }
+
+    // 6. Prazos e Datas (Início e Término)
+    p.start_date = startDate;
+    p.date = startDate;
+    p.end_date = endDate;
+    p.tap.start_date = startDate;
+    p.tap.end_date = endDate;
+    if (p.duration) p.tap.estimated_duration = p.duration;
+
+    if (p.schedule && p.schedule.length > 0) {
+        p.schedule[0].delivery_date = startDate;
+        p.schedule[p.schedule.length - 1].delivery_date = endDate;
+    }
+    p.closing_statement.date = endDate;
+    p.closing_statement.approval_date = endDate;
 
     // 7. Teto Orçamentário
-    const budgetLimit = p.budget_limit || (p.tap && p.tap.budget_limit);
-    if (budgetLimit) {
-        p.budget_limit = budgetLimit;
-        if (!p.tap) p.tap = {};
-        p.tap.budget_limit = budgetLimit;
+    p.budget_limit = budgetLimit;
+    p.tap.budget_limit = budgetLimit;
+
+    // TAP Stakeholders e Equipe
+    p.tap.main_stakeholders = `${sponsorName} (Sponsor), ${clientName} (Cliente), ${managerName} (GP).`;
+    if (!p.tap.team || p.tap.team.length === 0) {
+        p.tap.team = [`${managerName} (Gerente do Projeto)`];
     }
 
-    // 8. Equipe de Recursos alimentando RACI
+    // 8. Equipe de Recursos alimentando dinamicamente RACI
     if (p.resources && p.resources.team && p.raci_matrix && p.raci_matrix.members) {
         p.resources.team.forEach(tm => {
             if (!tm.name) return;
@@ -627,12 +666,12 @@ function syncProjectCrossBindings(p) {
             p.closing_statement.deliverables = p.scope_statement.deliverables.map((d, idx) => ({
                 id: d.id || idx + 1,
                 description: d.name,
-                responsible: p.manager || 'GP'
+                responsible: managerName
             }));
         }
     }
 
-    // 10. Orçamento 1 para Orçamento 2 (inicialização)
+    // 10. Orçamento 1 para Orçamento 2 (inicialização automática)
     if (p.budget_baseline && p.budget_baseline.items && p.budget_baseline.items.length > 0 && p.budget_revised) {
         if (!p.budget_revised.items || p.budget_revised.items.length === 0) {
             p.budget_revised.items = JSON.parse(JSON.stringify(p.budget_baseline.items));
@@ -645,16 +684,19 @@ function syncProjectCrossBindings(p) {
 
 function updateDatalistTeam() {
     const datalist = document.getElementById('projectTeamDatalist');
-    if (!datalist || !project) return;
+    if (!datalist) return;
+    const p = (typeof project !== 'undefined' && project) || (typeof window !== 'undefined' && window.project);
+    if (!p) return;
+
     const names = new Set();
-    if (project.manager) names.add(project.manager);
-    if (project.sponsor) names.add(project.sponsor);
-    if (project.client) names.add(project.client);
-    if (project.resources && project.resources.team) {
-        project.resources.team.forEach(t => { if (t.name) names.add(t.name); });
+    if (p.manager) names.add(p.manager);
+    if (p.sponsor) names.add(p.sponsor);
+    if (p.client) names.add(p.client);
+    if (p.resources && p.resources.team) {
+        p.resources.team.forEach(t => { if (t.name) names.add(t.name); });
     }
-    if (project.stakeholders) {
-        project.stakeholders.forEach(s => { if (s.name) names.add(s.name); });
+    if (p.stakeholders) {
+        p.stakeholders.forEach(s => { if (s.name) names.add(s.name); });
     }
     datalist.innerHTML = Array.from(names).map(n => `<option value="${n}">`).join('');
 }
@@ -672,9 +714,17 @@ window.updateProjectMasterField = function(field, value) {
     if (field === 'company' && p.tap) p.tap.company = value;
     if (field === 'start_date' && p.tap) p.tap.start_date = value;
     if (field === 'end_date' && p.tap) p.tap.end_date = value;
+    if (field === 'duration' && p.tap) p.tap.estimated_duration = value;
 
     syncProjectCrossBindings(p);
     updateDatalistTeam();
+
+    // Auto-persiste em cache local
+    if (typeof allProjects !== 'undefined' && Array.isArray(allProjects)) {
+        try {
+            localStorage.setItem('projeta_projects_cache', JSON.stringify(allProjects));
+        } catch (e) {}
+    }
 
     if (typeof project !== 'undefined') project = p;
     const select = document.getElementById('projectSelector');
@@ -1636,7 +1686,7 @@ function renderTap(c) {
 
         <div class="card">
             <div class="card-title">1. Identificação Geral & Organização</div>
-            <div class="grid-3">
+            <div class="grid-4">
                 <div class="form-group">
                     <label class="form-label">Organização Executora (Empresa):</label>
                     <input type="text" class="form-control" value="${project.company || ''}" onchange="updateProjectMasterField('company', this.value);">
@@ -1648,6 +1698,10 @@ function renderTap(c) {
                 <div class="form-group">
                     <label class="form-label">Nome do Projeto:</label>
                     <input type="text" class="form-control" value="${tap.project_name || project.name}" onchange="updateProjectMasterField('name', this.value);">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Código / Sigla:</label>
+                    <input type="text" class="form-control" value="${tap.project_code || project.code || 'PRJ'}" onchange="updateProjectMasterField('code', this.value);">
                 </div>
             </div>
             <div class="grid-3">
@@ -1764,13 +1818,23 @@ function renderScope(c) {
 
         <div class="card">
             <div class="card-title">Identificação e Classificação</div>
-            <div class="grid-4">
+            <div class="grid-3" style="margin-bottom:10px;">
+                <div class="form-group">
+                    <label class="form-label">Organização Executora (Empresa):</label>
+                    <input type="text" class="form-control" value="${project.company || ''}" onchange="updateProjectMasterField('company', this.value);">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cliente / Contratante:</label>
+                    <input type="text" class="form-control" value="${s.client || project.client || ''}" onchange="updateProjectMasterField('client', this.value);">
+                </div>
                 <div class="form-group">
                     <label class="form-label">Nome do Projeto:</label>
                     <input type="text" class="form-control" value="${s.project_name || project.name}" onchange="updateProjectMasterField('name', this.value);">
                 </div>
+            </div>
+            <div class="grid-3">
                 <div class="form-group">
-                    <label class="form-label">Sigla:</label>
+                    <label class="form-label">Código / Sigla:</label>
                     <input type="text" class="form-control" value="${s.code || project.code || 'PRJ'}" onchange="updateProjectMasterField('code', this.value);">
                 </div>
                 <div class="form-group">
@@ -2066,7 +2130,7 @@ function renderResources(c) {
                     <tbody>
                         ${team.map((m, idx) => `
                             <tr>
-                                <td><input type="text" class="form-control" value="${m.name}" onchange="project.resources.team[${idx}].name = this.value; syncTeamToRaciAndDatalist(project);"></td>
+                                <td><input type="text" class="form-control" value="${m.name}" onchange="project.resources.team[${idx}].name = this.value; if ((project.resources.team[${idx}].dept || '').includes('Gerente') || (project.resources.team[${idx}].dept || '').includes('GP')) { updateProjectMasterField('manager', this.value); } else { syncTeamToRaciAndDatalist(project); }"></td>
                                 <td><input type="text" class="form-control" value="${m.dept}" onchange="project.resources.team[${idx}].dept = this.value"></td>
                                 <td><input type="text" class="form-control" value="${m.email}" onchange="project.resources.team[${idx}].email = this.value"></td>
                                 <td><input type="text" class="form-control" value="${m.phone}" onchange="project.resources.team[${idx}].phone = this.value"></td>
@@ -2084,19 +2148,27 @@ function renderResources(c) {
 }
 
 window.addTeamMember = function() {
+    if (!project.resources) project.resources = { shifts: [], team: [] };
+    if (!project.resources.team) project.resources.team = [];
     project.resources.team.push({
-        name: "Novo Integrante",
-        email: "novo@empresa.com",
-        dept: "Engenharia",
+        name: `Especialista ${project.resources.team.length + 1}`,
+        email: "especialista@empresa.com",
+        dept: "Engenharia / Especialista",
         phone: "(11) 3000-1000",
         cell: "(11) 99000-1000"
     });
+    syncProjectCrossBindings(project);
+    updateDatalistTeam();
     renderCurrentTab();
 };
 
 window.deleteTeamMember = function(idx) {
-    project.resources.team.splice(idx, 1);
-    renderCurrentTab();
+    if (project.resources && project.resources.team) {
+        project.resources.team.splice(idx, 1);
+        syncProjectCrossBindings(project);
+        updateDatalistTeam();
+        renderCurrentTab();
+    }
 };
 
 // ---------------- 7. MATRIZ RACI ----------------
@@ -2635,8 +2707,8 @@ function renderStakeholders(c) {
                         <tbody>
                             ${list.map((s, idx) => `
                                 <tr>
-                                    <td><input type="text" class="form-control" value="${s.name}" onchange="project.stakeholders[${idx}].name = this.value; renderCurrentTab();"></td>
-                                    <td><input type="text" class="form-control" value="${s.role}" onchange="project.stakeholders[${idx}].role = this.value"></td>
+                                    <td><input type="text" class="form-control" value="${s.name}" onchange="handleStakeholderNameChange(${idx}, this.value)"></td>
+                                    <td><input type="text" class="form-control" value="${s.role}" onchange="handleStakeholderRoleChange(${idx}, this.value)"></td>
                                     <td>
                                         <select class="form-control" onchange="project.stakeholders[${idx}].power = parseInt(this.value); renderCurrentTab();">
                                             <option value="1" ${s.power === 1 ? 'selected' : ''}>1 (Baixo)</option>
@@ -2664,6 +2736,31 @@ function renderStakeholders(c) {
         ${renderDocJourneyNav('tap', '1. Termo de Abertura', 'scope', 'Avançar: 3. Declaração de Escopo')}
     `;
 }
+
+window.handleStakeholderNameChange = function(idx, val) {
+    if (!project.stakeholders || !project.stakeholders[idx]) return;
+    project.stakeholders[idx].name = val;
+    const role = (project.stakeholders[idx].role || '').toLowerCase();
+    if (role.includes('sponsor') || role.includes('patrocinador')) {
+        updateProjectMasterField('sponsor', val);
+    } else if (role.includes('cliente') || role.includes('client')) {
+        updateProjectMasterField('client', val);
+    } else {
+        syncProjectCrossBindings(project);
+    }
+    renderCurrentTab();
+};
+
+window.handleStakeholderRoleChange = function(idx, val) {
+    if (!project.stakeholders || !project.stakeholders[idx]) return;
+    project.stakeholders[idx].role = val;
+    const role = val.toLowerCase();
+    if (role.includes('sponsor') || role.includes('patrocinador')) {
+        updateProjectMasterField('sponsor', project.stakeholders[idx].name);
+    } else if (role.includes('cliente') || role.includes('client')) {
+        updateProjectMasterField('client', project.stakeholders[idx].name);
+    }
+};
 
 window.addStakeholderItem = function() {
     if (!project.stakeholders) project.stakeholders = [];
@@ -2811,7 +2908,7 @@ function renderCommunication(c) {
                                 <td><input type="text" class="form-control" value="${item.target_audience}" onchange="project.communication_plan[${idx}].target_audience = this.value"></td>
                                 <td><input type="text" class="form-control" value="${item.channel}" onchange="project.communication_plan[${idx}].channel = this.value"></td>
                                 <td><input type="text" class="form-control" value="${item.timing}" onchange="project.communication_plan[${idx}].timing = this.value"></td>
-                                <td><input type="text" class="form-control" value="${item.responsible}" onchange="project.communication_plan[${idx}].responsible = this.value"></td>
+                                <td><input type="text" list="projectTeamDatalist" class="form-control" value="${item.responsible}" onchange="project.communication_plan[${idx}].responsible = this.value"></td>
                                 <td><button class="btn btn-outline" style="padding:2px 6px; color:#dc2626;" onclick="deleteCommunicationItem(${idx})">🗑️</button></td>
                             </tr>
                         `).join('')}
@@ -3048,12 +3145,6 @@ function renderClosing(c) {
             <div class="form-group" style="margin-top:10px;">
                 <label class="form-label">Data de Homologação / Aceite Formal:</label>
                 <input type="date" class="form-control" value="${cl.approval_date || cl.date || project.end_date || project.date || ''}" onchange="project.closing_statement.approval_date = this.value; project.closing_statement.date = this.value;">
-            </div>
-        </div>
-                <div class="form-group">
-                    <label class="form-label">Data da Assinatura:</label>
-                    <input type="text" class="form-control" value="${cl.approval_date || project.date}" onchange="project.closing_statement.approval_date = this.value">
-                </div>
             </div>
         </div>
 
