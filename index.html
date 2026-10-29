@@ -44,6 +44,7 @@
             <button id="btnExportExcel" class="btn btn-primary" title="Exportar para Excel exatamente no padrão do template oficial">📥 Exportar Excel</button>
             <button id="btnExportPdfAll" class="btn btn-outline" title="Gerar Dossiê do Projeto completo em PDF">📄 Dossiê PDF</button>
             <button id="btnReset" class="btn btn-outline" style="color:#f87171; border-color:#7f1d1d;" title="Restaurar dados originais do projeto modelo">🔄 Resetar</button>
+            <a href="./v2/" id="btnSwitchV2" class="btn btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #4f46e5 100%); color:#fff; border:none; text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 12px; font-size:12px; border-radius:6px; box-shadow: 0 2px 8px rgba(37,99,235,0.35);" title="Experimentar a nova interface reativa em React 19 / TypeScript">✨ Projeta V2 (React)</a>
 
             <!-- Autenticação e Sessão Corporativa -->
             <div id="userProfileArea" style="display:none; align-items:center; gap:8px; border-left:1px solid #334155; padding-left:12px; margin-left:4px;">
@@ -371,7 +372,7 @@
                     </label>
                     <div class="input-icon-wrapper">
                         <span class="input-icon">👤</span>
-                        <input type="text" id="loginUser" class="form-control login-input" placeholder="ex: C100502" maxlength="7" autocomplete="username" required autofocus>
+                        <input type="text" id="loginUser" class="form-control login-input" placeholder="ex: C100502" maxlength="10" oninput="this.value = this.value.replace(/\s+/g, '').toUpperCase()" autocomplete="username" required autofocus>
                     </div>
                     <small style="color:#64748b; font-size:11px; display:block; margin-top:4px;">
                         Padrão de 7 dígitos corporativo CAIXA (ex: C100502 ou c100502).

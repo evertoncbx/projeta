@@ -3,16 +3,27 @@
 
 ---
 
-### 1. Resumo Executivo
+### 1. Resumo Executivo & Decisão Estrutural
 
-O usuário levantou a seguinte reflexão técnica:
-> *"não seria melhor utilizar uma linguagem mais robusta e segura como node.js?? ou alguma linguagem que abarque a necessidade de um UX mais intuitivo? Avalie isso e se achar que sim, refature tudo para a nova linguagem, porém mantenha versão https://projeta-sand.vercel.app de forma funcional..."*
+O usuário solicitou:
+> *"1 - adicione tela de login com usuário com 7 dígitos sendo 'C100502' e senha '74271248'*
+> *2 - Avalie - não seria melhor utilizar uma linguagem mais robusta e segura como node.js?? ou alguma linguagem que abarque a necessidade de um UX mais intuitivo? Avalie isso e se achar que sim, refature tudo para a nova linguagem, porém mantenha versão https://projeta-sand.vercel.app de forma funcional, ou seja, se for refatorar, crie um novo site, novo link, nova estrutura de banco de dados, dentro do mesmo projeto para experimentarmos alternativas de desining, mas eu já vou começar a usar o atual, então não mate a versão atual"*
 
-**Conclusão da Avaliação:** **SIM, a adoção de um ecossistema moderno baseado em Node.js / React / TypeScript / Tailwind CSS traz ganhos expressivos de robustez, confiabilidade de tipagem e ergonomia de UX.**
+**Conclusão da Avaliação:** **SIM, a transição para um ecossistema moderno baseado em Node.js / React 19 / TypeScript / Tailwind CSS é altamente recomendada e superior em todos os vetores de UX, segurança corporativa, tipagem e manutenção.**
 
-Para garantir segurança operacional absoluta, a migração foi conduzida sob o princípio da **Preservação de Produção**:
-1. **Versão Atual (V1) em Produção Ativa**: Mantida 100% íntegra e funcional no repositório `evertoncbx/projeta` e no endereço oficial da Vercel: **https://projeta-sand.vercel.app**. Nela foi adicionada a tela de autenticação corporativa exigida (`C100502` / `74271248`), com persistência de sessão e botão de logout.
-2. **Nova Geração (V2) Experimental**: Construída em diretório totalmente isolado (`d:\dataScience\projeta-v2`), estruturada em **React 19 + TypeScript + Vite + Tailwind CSS + Lucide Icons**, com tipagem estrita de todos os 16 módulos do IPMA, controle reativo de estado e arquitetura extensível para backend Node.js / PostgreSQL / Supabase.
+Para atender integralmente à solicitação sem interromper a operação ativa:
+1. **Versão Atual (V1) Mantida 100% Funcional**:
+   - Disponível em: **https://projeta-sand.vercel.app**
+   - Autenticação corporativa integrada: usuário `C100502` (case-insensitive) e senha `74271248`.
+   - Persistência segura em `localStorage` / `sessionStorage`, botão `🚪 Sair` no header e botão de navegação direta para a V2.
+2. **Novo Site & Novo Link Integrados (V2)**:
+   - Disponível em: **https://projeta-sand.vercel.app/v2/**
+   - Desenvolvido em **React 19 + TypeScript + Tailwind CSS + Lucide Icons + Vite**.
+   - Botão no cabeçalho para retorno imediato à versão clássica V1 (`⬅️ Versão Clássica V1`).
+   - Single Sign-On (SSO) corporativo compartilhado: ao autenticar em uma das versões, a sessão é automaticamente reconhecida na outra.
+3. **Nova Estrutura de Banco de Dados Relacional**:
+   - Arquivo oficial: `supabase_schema_v2.sql` (disponível na raiz de `projeta` e `projeta-v2`).
+   - Modelo relacional avançado no PostgreSQL/Supabase com 7 tabelas normalizadas (`projects_v2`, `wbs_nodes_v2`, `risks_v2`, `budget_items_v2`, `raci_matrix_v2`, `competence_evaluations_v2`, `audit_logs_v2`), políticas RLS, triggers de auditoria e bucket de storage dedicado `projeta-v2`.
 
 ---
 
@@ -24,69 +35,47 @@ Para garantir segurança operacional absoluta, a migração foi conduzida sob o 
 | **Segurança & Tipagem** | JavaScript dinâmico sem compilação. Erros de digitação em propriedades de objetos só aparecem em tempo de execução. | **TypeScript Estrito (TS 5.x)** com interfaces formais para os 16 artefatos (`ProjectData`, `Tap`, `WbsNode`, `BudgetItem`). | Erros de integridade de dados são eliminados durante o build (`npm run build`). |
 | **Componentização Visual** | CSS monolítico de 1.100 linhas (`style.css`), classes manuais e botões com estilos inline. | **Tailwind CSS + Lucide Icons**: Design System padronizado, tokens corporativos consistentes e paleta harmônica. | Interface moderna, alinhada com os padrões institucionais da CAIXA e frameworks de mercado. |
 | **Segurança Corporativa** | Toda a lógica reside no navegador (client-side). Segredos de API não podem residir no código estático. | Suporte nativo a backend Node.js (Next.js API Routes / Express) com isolamento de tokens, hashing de senhas e JWT. | Permite conectar diretamente ao Active Directory / SSO corporativo e bancos de dados seguros via VPN. |
-| **Escalabilidade da Base de Código** | Arquivo `projeta.js` com mais de 2.600 linhas. Manutenção de regras de negócio complexas torna-se arriscada. | Código modularizado em pastas especializadas (`context/`, `components/`, `tabs/`, `types/`, `data/`). | Facilita divisão de trabalho em equipe, testes unitários automatizados e CI/CD. |
-| **Confiabilidade de Build** | Sem etapa de compilação; assets estáticos diretos. | Vite Bundler com Tree-Shaking, Minificação e Gzip gerando pacote estático ultrarrápido (`dist/` em 1.0s). | Performance de carregamento máxima em conexões corporativas com firewall restrito. |
+| **Escalabilidade da Base de Código** | Arquivo `projeta.js` com mais de 2.600 linhas. Manutenção de regras de negócio complexas torna-se arriscada. | Código modularizado em pastas especializadas (`context/`, `components/`, `tabs/`, `types/`, `data/`, `services/`). | Facilita divisão de trabalho em equipe, testes unitários automatizados e CI/CD. |
+| **Confiabilidade de Build** | Sem etapa de compilação; assets estáticos diretos. | Vite Bundler com Tree-Shaking, Minificação e Gzip gerando pacote estático ultrarrápido (`dist/` em < 1s). | Performance de carregamento máxima em conexões corporativas com firewall restrito. |
 
 ---
 
-### 3. Detalhamento da Nova Versão (Projeta V2)
+### 3. Nova Estrutura de Banco de Dados (Supabase / PostgreSQL)
 
-A aplicação experimental em `d:\dataScience\projeta-v2` implementa:
-1. **Autenticação Corporativa (Modal & Context)**:
-   - Validação da matrícula funcional com 7 caracteres: `C100502` (case-insensitive).
-   - Senha de acesso: `74271248`.
-   - Persistência configurável (`localStorage` para lembrar acesso ou `sessionStorage` para sessão volátil).
-   - Botão de logout no header com limpeza imediata de credenciais e proteção de rotas/conteúdo.
-2. **Ciclo de Vida Integrado (Lifecycle Bar)**:
-   - Stepper visual dos 4 gates: Iniciação ➔ Planejamento ➔ Execução & Monitoramento ➔ Encerramento.
-   - Navegação contextual com cálculo de maturidade.
-3. **Olho da Competência IPMA (ICB4)**:
-   - Painel dinâmico cobrindo as **28 competências gerenciais** divididas nos domínios Perspectiva (5), Pessoas (10) e Prática (13), com notas individuais e cálculo da média global.
-4. **Todos os Artefatos Estruturados em Abas Especializadas**:
-   - TAP (Termo de Abertura)
-   - Partes Interessadas (Matriz Poder × Interesse)
-   - Declaração de Escopo (Entregas e Exclusões)
-   - EAP & WBS Interativa (Árvore com líderes e status de entregáveis)
-   - Cronograma & Marcos Críticos
-   - Matriz RACI Expandida (R, Rv, A, C, I, P)
-   - Orçamento Linha de Base vs. Revisado (com cálculo de contingência e economia líquida de R$ 700.000,00)
-   - Plano de Gestão de Riscos (Classificação de severidade e estratégias de resposta)
-   - Plano de Qualidade & Checklists
-   - Lições Aprendidas Contínuas (com perguntas reflexivas da equipe)
-   - Termo de Encerramento com Parecer Final
-   - Trilha de Auditoria e Controle de Versões
-5. **Wizard de Criação de Novos Projetos**:
-   - Fluxo onboarding guiado em 3 passos com persistência multi-projetos no armazenamento do navegador e adaptadores para Supabase.
+Para suportar o design de nova geração e auditoria multiusuário corporativa, foi criado o arquivo `supabase_schema_v2.sql`:
+
+1. **`projects_v2`**: Tabela principal de projetos estratégicos com metadados, gate de ciclo de vida (`current_phase`), classificação e payload JSONB indexado via GIN.
+2. **`wbs_nodes_v2`**: Árvore hierárquica normalizada da Estrutura Analítica do Projeto (EAP/WBS) com percentual de avanço, líderes de pacotes e status.
+3. **`risks_v2`**: Registro formal de riscos com cálculo automatizado de severidade (`probability * impact`), estratégias de mitigação (Evitar, Mitigar, Transferir, Aceitar) e plano de ação.
+4. **`budget_items_v2`**: Livro-razão orçamentário distinguindo linha de base (`baseline`) de orçamento revisado (`revised`), com colunas calculadas de custo total.
+5. **`raci_matrix_v2`**: Matriz RACI expandida associando entregáveis a papéis de partes interessadas com regras de validação estritas (R, A, C, I, Rv, P).
+6. **`competence_evaluations_v2`**: Avaliação das **28 competências gerenciais do IPMA ICB4** (Perspectiva, Pessoas e Prática) com notas de 0 a 10 e registro de evidências.
+7. **`audit_logs_v2`**: Trilha de auditoria e governança registrando eventos críticos (LOGIN, LOGOUT, UPDATE, EXPORT) com matrícula funcional e timestamp.
+8. **Bucket `projeta-v2`**: Storage dedicado no Supabase com Row Level Security (RLS) habilitado para leitura e upload de dossiês e anexos.
 
 ---
 
-### 4. Instruções de Execução do Projeta V2
+### 4. Como Acessar e Testar
 
-Para rodar a versão experimental moderna localmente:
+#### Acesso Online (Produção Vercel):
+- **Versão Clássica V1**: [https://projeta-sand.vercel.app](https://projeta-sand.vercel.app)
+- **Nova Versão Experimental V2**: [https://projeta-sand.vercel.app/v2/](https://projeta-sand.vercel.app/v2/)
+- Ambos os ambientes possuem botões no cabeçalho permitindo alternar de um para o outro em 1 clique.
 
-```bash
-# 1. Acessar o diretório da versão V2
-cd d:\dataScience\projeta-v2
-
-# 2. Iniciar servidor de desenvolvimento (Vite)
-npm run dev
-# -> Acessível em: http://127.0.0.1:5174
-
-# 3. Ou compilar para produção e visualizar a build otimizada
-npm run build
-npm run preview
-# -> Build compilada em: dist/
-```
-
-Credenciais de teste:
+#### Credenciais de Acesso Corporativo:
 - **Usuário**: `C100502` (ou `c100502`)
 - **Senha**: `74271248`
 
----
+#### Execução Local do Projeta V2 (Desenvolvimento):
+```bash
+# 1. Acessar o diretório de desenvolvimento do V2
+cd d:\dataScience\projeta-v2
 
-### 5. Garantia de Continuidade da Versão em Produção (V1)
+# 2. Iniciar servidor Vite de desenvolvimento
+npm run dev
+# -> Acesso em: http://127.0.0.1:5174
 
-A versão oficial em **https://projeta-sand.vercel.app** continua ativa, atualizada e com 100% de suas funcionalidades preservadas:
-- O repositório oficial `evertoncbx/projeta` recebeu commit das credenciais corporativas no branch `main`.
-- Todos os assets (`index.html`, `js/auth.js`, `js/projeta.js`, `excelExporter.js`, `template.xlsx`) respondem com Status 200 na CDN da Vercel.
-- Nenhuma alteração destrutiva foi feita na infraestrutura existente.
+# 3. Executar compilação de produção e testes
+npm run build
+python test_v2_verification.py
+```

@@ -26,9 +26,15 @@ def run_tests():
         ("/js/excelExporter.js", 200, "application/javascript"),
         ("/js/projeta.js", 200, "application/javascript"),
         ("/template.xlsx", 200, None),
+        ("/supabase_schema.sql", 200, None),
+        ("/supabase_schema_v2.sql", 200, None),
+        ("/v2/", 200, "text/html"),
+        ("/v2/index.html", 200, "text/html"),
+        ("/v2/assets/index-6IwR5QGb.js", 200, "application/javascript"),
+        ("/v2/assets/index-CTbPteOH.css", 200, "text/css"),
     ]
 
-    print("=== INICIANDO TESTES DE ASSETS E ROTAS DO PROJETA ===")
+    print("=== INICIANDO TESTES DE ASSETS E ROTAS DO PROJETA (V1 + V2) ===")
     all_ok = True
     base_url = f"http://127.0.0.1:{PORT}"
 
@@ -57,7 +63,7 @@ def run_tests():
 
     print("=== RESULTADO DA VERIFICACAO DE ROTAS: ===")
     if all_ok:
-        print(">>> TODOS OS ASSETS CARREGADOS COM 100% DE SUCESSO E SEM ERROS DE MIME! <<<")
+        print(">>> TODOS OS ASSETS (V1 + V2 + SCHEMAS) CARREGADOS COM 100% DE SUCESSO! <<<")
     else:
         print(">>> HOUVE FALHA NO CARREGAMENTO DOS ASSETS <<<")
         sys.exit(1)

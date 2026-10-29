@@ -7,15 +7,18 @@ const AUTH_CONFIG = {
     validUser: 'C100502',
     validPass: '74271248',
     storageKey: 'projeta_auth_session',
-    userKey: 'projeta_auth_user'
+    userKey: 'projeta_auth_user',
+    v2UserKey: 'projeta_v2_auth_user'
 };
 
 const ProjetaAuth = {
     // Verifica se a sessão está ativa
     isAuthenticated() {
         try {
-            const userLocal = typeof localStorage !== 'undefined' ? localStorage.getItem(AUTH_CONFIG.userKey) : null;
-            const userSession = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(AUTH_CONFIG.userKey) : null;
+            const userLocal = typeof localStorage !== 'undefined' ? 
+                (localStorage.getItem(AUTH_CONFIG.userKey) || localStorage.getItem(AUTH_CONFIG.v2UserKey)) : null;
+            const userSession = typeof sessionStorage !== 'undefined' ? 
+                (sessionStorage.getItem(AUTH_CONFIG.userKey) || sessionStorage.getItem(AUTH_CONFIG.v2UserKey)) : null;
             const activeUser = userLocal || userSession;
             return !!(activeUser && activeUser.trim().toUpperCase() === AUTH_CONFIG.validUser);
         } catch (e) {
@@ -26,8 +29,8 @@ const ProjetaAuth = {
 
     getCurrentUser() {
         try {
-            const u = (typeof localStorage !== 'undefined' ? localStorage.getItem(AUTH_CONFIG.userKey) : null) ||
-                      (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(AUTH_CONFIG.userKey) : null);
+            const u = (typeof localStorage !== 'undefined' ? (localStorage.getItem(AUTH_CONFIG.userKey) || localStorage.getItem(AUTH_CONFIG.v2UserKey)) : null) ||
+                      (typeof sessionStorage !== 'undefined' ? (sessionStorage.getItem(AUTH_CONFIG.userKey) || sessionStorage.getItem(AUTH_CONFIG.v2UserKey)) : null);
             return u ? u.trim().toUpperCase() : AUTH_CONFIG.validUser;
         } catch (e) {
             return AUTH_CONFIG.validUser;
@@ -49,17 +52,19 @@ const ProjetaAuth = {
             };
         }
 
-        // Salva na persistência
+        // Salva na persistência (sincronizado com V1 e V2)
         try {
             if (typeof localStorage !== 'undefined' && typeof sessionStorage !== 'undefined') {
                 if (remember) {
                     localStorage.setItem(AUTH_CONFIG.userKey, normalizedUser);
+                    localStorage.setItem(AUTH_CONFIG.v2UserKey, normalizedUser);
                     localStorage.setItem(AUTH_CONFIG.storageKey, JSON.stringify({
                         user: normalizedUser,
                         authenticatedAt: new Date().toISOString()
                     }));
                 } else {
                     sessionStorage.setItem(AUTH_CONFIG.userKey, normalizedUser);
+                    sessionStorage.setItem(AUTH_CONFIG.v2UserKey, normalizedUser);
                     sessionStorage.setItem(AUTH_CONFIG.storageKey, JSON.stringify({
                         user: normalizedUser,
                         authenticatedAt: new Date().toISOString()
@@ -75,10 +80,16 @@ const ProjetaAuth = {
 
     logout() {
         try {
-            localStorage.removeItem(AUTH_CONFIG.userKey);
-            localStorage.removeItem(AUTH_CONFIG.storageKey);
-            sessionStorage.removeItem(AUTH_CONFIG.userKey);
-            sessionStorage.removeItem(AUTH_CONFIG.storageKey);
+            if (typeof localStorage !== 'undefined') {
+                localStorage.removeItem(AUTH_CONFIG.userKey);
+                localStorage.removeItem(AUTH_CONFIG.v2UserKey);
+                localStorage.removeItem(AUTH_CONFIG.storageKey);
+            }
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.removeItem(AUTH_CONFIG.userKey);
+                sessionStorage.removeItem(AUTH_CONFIG.v2UserKey);
+                sessionStorage.removeItem(AUTH_CONFIG.storageKey);
+            }
         } catch (e) {
             console.warn('[ProjetaAuth] Falha ao limpar storage:', e);
         }

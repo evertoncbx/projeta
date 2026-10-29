@@ -2,6 +2,14 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/v2",
+      "destination": "/v2/index.html"
+    },
+    {
+      "source": "/v2/assets/(.*)",
+      "destination": "/v2/assets/$1"
+    },
+    {
       "source": "/projeta",
       "destination": "/index.html"
     },
@@ -29,6 +37,18 @@
       "source": "/js/(.*)",
       "headers": [
         { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
+      ]
+    },
+    {
+      "source": "/v2/assets/(.*\\.js)",
+      "headers": [
+        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
+      ]
+    },
+    {
+      "source": "/v2/assets/(.*\\.css)",
+      "headers": [
+        { "key": "Content-Type", "value": "text/css; charset=utf-8" }
       ]
     },
     {
