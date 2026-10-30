@@ -10,6 +10,14 @@
       "destination": "/v2/assets/$1"
     },
     {
+      "source": "/v2/template.xlsx",
+      "destination": "/v2/template.xlsx"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "/assets/$1"
+    },
+    {
       "source": "/projeta",
       "destination": "/index.html"
     },
@@ -28,15 +36,15 @@
       ]
     },
     {
-      "source": "/css/(.*)",
+      "source": "/assets/(.*\\.js)",
       "headers": [
-        { "key": "Content-Type", "value": "text/css; charset=utf-8" }
+        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
       ]
     },
     {
-      "source": "/js/(.*)",
+      "source": "/assets/(.*\\.css)",
       "headers": [
-        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
+        { "key": "Content-Type", "value": "text/css; charset=utf-8" }
       ]
     },
     {
@@ -52,13 +60,13 @@
       ]
     },
     {
-      "source": "/exceljs.min.js",
+      "source": "/template.xlsx",
       "headers": [
-        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
+        { "key": "Content-Type", "value": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
       ]
     },
     {
-      "source": "/template.xlsx",
+      "source": "/v2/template.xlsx",
       "headers": [
         { "key": "Content-Type", "value": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
       ]
