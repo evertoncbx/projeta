@@ -1,5 +1,5 @@
 -- ============================================================================
--- PROJETA V2 - Esquema Relacional Corporativo & Governança IPMA ICB4
+-- PROJECTUS V2 - Esquema Relacional Corporativo & Governança IPMA ICB4
 -- Compatível com Supabase / PostgreSQL 15+ & Autenticação Corporativa CAIXA
 -- ============================================================================
 
@@ -177,20 +177,20 @@ CREATE POLICY "Acesso corporativo total competence_v2" ON public.competence_eval
 DROP POLICY IF EXISTS "Acesso corporativo total audit_logs_v2" ON public.audit_logs_v2;
 CREATE POLICY "Acesso corporativo total audit_logs_v2" ON public.audit_logs_v2 FOR ALL USING (true) WITH CHECK (true);
 
--- 11. BUCKET DEDICADO DE STORAGE NO SUPABASE ('projeta-v2')
+-- 11. BUCKET DEDICADO DE STORAGE NO SUPABASE ('projectus-v2')
 INSERT INTO storage.buckets (id, name, public) 
-VALUES ('projeta-v2', 'projeta-v2', true)
+VALUES ('projectus-v2', 'projectus-v2', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Políticas de Storage para projeta-v2
-DROP POLICY IF EXISTS "Leitura pública storage projeta-v2" ON storage.objects;
-CREATE POLICY "Leitura pública storage projeta-v2" ON storage.objects FOR SELECT USING (bucket_id = 'projeta-v2');
+-- Políticas de Storage para projectus-v2
+DROP POLICY IF EXISTS "Leitura pública storage projectus-v2" ON storage.objects;
+CREATE POLICY "Leitura pública storage projectus-v2" ON storage.objects FOR SELECT USING (bucket_id = 'projectus-v2');
 
-DROP POLICY IF EXISTS "Escrita pública storage projeta-v2" ON storage.objects;
-CREATE POLICY "Escrita pública storage projeta-v2" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'projeta-v2');
+DROP POLICY IF EXISTS "Escrita pública storage projectus-v2" ON storage.objects;
+CREATE POLICY "Escrita pública storage projectus-v2" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'projectus-v2');
 
-DROP POLICY IF EXISTS "Atualização storage projeta-v2" ON storage.objects;
-CREATE POLICY "Atualização storage projeta-v2" ON storage.objects FOR UPDATE USING (bucket_id = 'projeta-v2');
+DROP POLICY IF EXISTS "Atualização storage projectus-v2" ON storage.objects;
+CREATE POLICY "Atualização storage projectus-v2" ON storage.objects FOR UPDATE USING (bucket_id = 'projectus-v2');
 
-DROP POLICY IF EXISTS "Exclusão storage projeta-v2" ON storage.objects;
-CREATE POLICY "Exclusão storage projeta-v2" ON storage.objects FOR DELETE USING (bucket_id = 'projeta-v2');
+DROP POLICY IF EXISTS "Exclusão storage projectus-v2" ON storage.objects;
+CREATE POLICY "Exclusão storage projectus-v2" ON storage.objects FOR DELETE USING (bucket_id = 'projectus-v2');
