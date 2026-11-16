@@ -1,0 +1,24 @@
+<svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pjStem" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#0033FF" />
+      <stop offset="100%" stopColor="#001FBB" />
+    </linearGradient>
+    <linearGradient id="pjOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#FFA743" />
+      <stop offset="50%" stopColor="#FF8A16" />
+      <stop offset="100%" stopColor="#E3650D" />
+    </linearGradient>
+    <linearGradient id="pjBlue" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stopColor="#001364" />
+      <stop offset="100%" stopColor="#0033FF" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="22" fill="#001364" />
+  <path d="M 22 28 C 22 23 26 20 32 20 L 42 20 C 45 20 47 22 47 25 L 47 78 C 47 82 43 84 39 84 L 30 84 C 25 84 22 81 22 76 Z" fill="url(#pjStem)" />
+  <path d="M 42 20 L 68 20 C 80 20 88 28 86 40 L 62 40 L 47 25 Z" fill="url(#pjBlue)" />
+  <path d="M 62 40 L 86 40 C 84 52 76 64 64 64 L 47 64 L 47 45 Z" fill="url(#pjOrange)" />
+  <path d="M 64 64 L 82 46 L 86 56 C 82 65 73 67 64 64 Z" fill="#FEC07A" />
+  <path d="M 47 32 L 62 32 C 67 32 70 35 69 40 C 68 45 64 48 59 48 L 47 48 Z" fill="#001364" />
+  <polygon points="47,26 55,26 47,34" fill="#FFFFFF" opacity="0.9" />
+</svg>

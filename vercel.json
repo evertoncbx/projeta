@@ -2,6 +2,10 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/health",
+      "destination": "/api-health.json"
+    },
+    {
       "source": "/v2",
       "destination": "/v2/index.html"
     },
